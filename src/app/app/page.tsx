@@ -15,6 +15,9 @@ import { SimulatedVideo } from "./components/SimulatedVideo";
 import { WagerScreen } from "./components/WagerScreen";
 import {
   CONFIG,
+  getDemoVideoSet,
+  getRandomDemoSetId,
+  type DemoVideoSetId,
   type Direction,
   type Outcome,
   type PredictionChoice,
@@ -38,6 +41,7 @@ const showGameDevHud = isProd
   ? devHudFlag === "true"
   : devHudFlag !== "false";
 
+type ClaimPhase = "editing" | "error" | "submitting" | "success";
 type GameState =
   | "wager"
   | "countdown"
@@ -46,26 +50,39 @@ type GameState =
   | "video_resuming"
   | "result";
 
-type VideoMode = typeof CONFIG.ACTIVE_DEMO_SET_ID | "simulated";
+type VideoMode = DemoVideoSetId | "simulated";
+
+function isEvmAddress(value: string) {
+  return /^0x[a-fA-F0-9]{40}$/.test(value);
+}
 
 export default function AppPage() {
-  const activeDemoSet = CONFIG.ACTIVE_DEMO_VIDEO_SET;
-  const realVideoMode: VideoMode = CONFIG.ACTIVE_DEMO_SET_ID;
   const [actualResult, setActualResult] = useState<DemoVideoResult>(
     DEFAULT_DEMO_VIDEO_RESULT
   );
-  const [selectedWager, setSelectedWager] = useState<number | null>(null);
+  const [claimErrorMessage, setClaimErrorMessage] = useState<string | null>(null);
+  const [claimPhase, setClaimPhase] = useState<ClaimPhase>("editing");
+  const [claimRecipient, setClaimRecipient] = useState("");
+  const [didWin, setDidWin] = useState(false);
   const [gameState, setGameState] = useState<GameState>("wager");
   const [lastPrediction, setLastPrediction] = useState<PredictionChoice | null>(
     null
   );
-  const lastPredictionRef = useRef<PredictionChoice | null>(null);
+  const [selectedWager, setSelectedWager] = useState<number | null>(null);
+  const [settlement, setSettlement] = useState<PayoutBreakdown | null>(null);
+  const [currentDemoSetId, setCurrentDemoSetId] = useState<DemoVideoSetId>(
+    CONFIG.ACTIVE_DEMO_SET_ID
+  );
   const [videoError, setVideoError] = useState(false);
   const [videoKey, setVideoKey] = useState(0);
-  const [didWin, setDidWin] = useState(false);
-  const [settlement, setSettlement] = useState<PayoutBreakdown | null>(null);
-  // Default to the real demo set and keep simulation only as fallback.
-  const [videoMode, setVideoMode] = useState<VideoMode>(realVideoMode);
+  const [videoMode, setVideoMode] = useState<VideoMode>(CONFIG.ACTIVE_DEMO_SET_ID);
+
+  const lastPredictionRef = useRef<PredictionChoice | null>(null);
+  const activeDemoSet = useMemo(
+    () => getDemoVideoSet(currentDemoSetId),
+    [currentDemoSetId]
+  );
+  const realVideoMode: VideoMode = currentDemoSetId;
 
   const playEnabled = useMemo(() => selectedWager !== null, [selectedWager]);
   const usesSimulatedVideo = videoMode === "simulated";
@@ -104,15 +121,27 @@ export default function AppPage() {
     return "intro";
   }, [gameState]);
 
-  const handlePlay = () => {
-    if (!playEnabled) return;
-    setVideoError(false);
-    setSettlement(null);
+  const resetRoundState = useCallback(() => {
     lastPredictionRef.current = null;
+    setClaimErrorMessage(null);
+    setClaimPhase("editing");
+    setClaimRecipient("");
+    setDidWin(false);
     setLastPrediction(null);
-    setVideoKey((k) => k + 1);
+    setSettlement(null);
+    setVideoError(false);
+    setVideoMode(currentDemoSetId);
+  }, [currentDemoSetId]);
+
+  const handlePlay = useCallback(() => {
+    if (selectedWager === null) return;
+    resetRoundState();
+    const nextDemoSetId = getRandomDemoSetId();
+    setCurrentDemoSetId(nextDemoSetId);
+    setVideoMode(nextDemoSetId);
+    setVideoKey((value) => value + 1);
     setGameState("countdown");
-  };
+  }, [resetRoundState, selectedWager]);
 
   const handleCountdownComplete = useCallback(() => {
     setGameState("video_playing");
@@ -122,26 +151,33 @@ export default function AppPage() {
     setGameState("prediction");
   }, []);
 
-  const handlePredictionComplete = useCallback(
-    (choice: { direction: Direction; outcome: Outcome } | null) => {
+  const handlePredictionTimeout = useCallback(() => {
+    const nextSettlement =
+      selectedWager !== null
+        ? calculateTimeoutLossPayout({
+            wager: selectedWager,
+            actualResult,
+          })
+        : null;
+
+    lastPredictionRef.current = null;
+    setDidWin(false);
+    setLastPrediction(null);
+    setSettlement(nextSettlement);
+    setGameState("result");
+  }, [actualResult, selectedWager]);
+
+  const handleLockPrediction = useCallback(async () => {
+    await new Promise((resolve) => window.setTimeout(resolve, 1400));
+  }, []);
+
+  const handlePredictionConfirmed = useCallback(
+    (choice: { direction: Direction; outcome: Outcome }) => {
       lastPredictionRef.current = choice;
       setLastPrediction(choice);
-      if (choice === null) {
-        setSettlement(
-          selectedWager !== null
-            ? calculateTimeoutLossPayout({
-                wager: selectedWager,
-                actualResult,
-              })
-            : null
-        );
-        setDidWin(false);
-        setGameState("result");
-        return;
-      }
       setGameState("video_resuming");
     },
-    [actualResult, selectedWager]
+    []
   );
 
   const handleVideoEnded = useCallback(() => {
@@ -160,6 +196,26 @@ export default function AppPage() {
     setGameState("result");
   }, [actualResult, selectedWager]);
 
+  const handleClaimSubmit = useCallback(async () => {
+    if (!isEvmAddress(claimRecipient)) {
+      setClaimPhase("error");
+      setClaimErrorMessage("Enter a valid EVM wallet address.");
+      return;
+    }
+
+    setClaimErrorMessage(null);
+    setClaimPhase("submitting");
+    await new Promise((resolve) => window.setTimeout(resolve, 900));
+    setClaimPhase("success");
+  }, [claimRecipient]);
+
+  const handleClaimModalClose = useCallback(() => {
+    if (claimPhase !== "success") {
+      setClaimPhase("editing");
+    }
+    setClaimErrorMessage(null);
+  }, [claimPhase]);
+
   const handleVideoLoadError = useCallback(() => {
     setVideoError(true);
     setVideoMode("simulated");
@@ -168,41 +224,35 @@ export default function AppPage() {
   const handleRetryVideo = useCallback(() => {
     setVideoError(false);
     setVideoMode(realVideoMode);
-    setVideoKey((k) => k + 1);
+    setVideoKey((value) => value + 1);
     setGameState("video_playing");
   }, [realVideoMode]);
 
   const handlePlayAgainFromResult = useCallback(() => {
     setGameState("wager");
-    setSettlement(null);
-    lastPredictionRef.current = null;
-    setLastPrediction(null);
-  }, []);
+    resetRoundState();
+  }, [resetRoundState]);
 
   const handleDevJump = useCallback(
     (step: GameState, options?: { resultWin?: boolean }) => {
       setVideoError(false);
 
       if (step === "wager") {
-        lastPredictionRef.current = null;
-        setLastPrediction(null);
-        setDidWin(false);
+        resetRoundState();
         setGameState("wager");
         return;
       }
 
       if (step === "countdown") {
-        lastPredictionRef.current = null;
-        setLastPrediction(null);
-        setVideoKey((k) => k + 1);
+        resetRoundState();
+        setVideoKey((value) => value + 1);
         setGameState("countdown");
         return;
       }
 
       if (step === "video_playing") {
-        lastPredictionRef.current = null;
-        setLastPrediction(null);
-        setVideoKey((k) => k + 1);
+        resetRoundState();
+        setVideoKey((value) => value + 1);
         setGameState("video_playing");
         return;
       }
@@ -222,60 +272,53 @@ export default function AppPage() {
           direction: actualResult.direction,
           outcome: actualResult.outcome,
         };
-
         const losingChoice: PredictionChoice = {
           direction: actualResult.direction === "left" ? "right" : "left",
           outcome: actualResult.outcome === "goal" ? "miss" : "goal",
         };
+        const choice =
+          options?.resultWin === true
+            ? actualChoice
+            : options?.resultWin === false
+              ? losingChoice
+              : actualChoice;
 
-        const computeSettlement = (choice: PredictionChoice | null) => {
-          if (choice === null || selectedWager === null) return null;
-
-          return calculatePayout({
-            wager: selectedWager,
-            userPick: choice,
-            actualResult,
-          });
-        };
-
-        if (options?.resultWin === true) {
-          lastPredictionRef.current = actualChoice;
-          setLastPrediction(actualChoice);
-          const nextSettlement = computeSettlement(actualChoice);
-          setSettlement(nextSettlement);
-          setDidWin((nextSettlement?.profit ?? 0) > 0);
-        } else if (options?.resultWin === false) {
-          lastPredictionRef.current = losingChoice;
-          setLastPrediction(losingChoice);
-          const nextSettlement = computeSettlement(losingChoice);
-          setSettlement(nextSettlement);
-          setDidWin((nextSettlement?.profit ?? 0) > 0);
-        } else {
-          if (!lastPredictionRef.current) {
-            lastPredictionRef.current = actualChoice;
-            setLastPrediction(actualChoice);
-          }
-          const nextSettlement = computeSettlement(lastPredictionRef.current);
-          setSettlement(nextSettlement);
-          setDidWin((nextSettlement?.profit ?? 0) > 0);
-        }
+        lastPredictionRef.current = choice;
+        setLastPrediction(choice);
+        setSettlement(
+          selectedWager !== null
+            ? calculatePayout({
+                wager: selectedWager,
+                userPick: choice,
+                actualResult,
+              })
+            : null
+        );
+        setDidWin(options?.resultWin !== false);
         setGameState("result");
       }
     },
-    [actualResult, selectedWager]
+    [actualResult, resetRoundState, selectedWager]
   );
 
-  const handleDevVideoMockChange = useCallback((value: boolean) => {
-    setVideoError(false);
-    if (
-      gameState === "video_playing" ||
-      gameState === "prediction" ||
-      gameState === "video_resuming"
-    ) {
-      setVideoKey((k) => k + 1);
-    }
-    setVideoMode(value ? "simulated" : realVideoMode);
-  }, [gameState, realVideoMode]);
+  const handleDevVideoMockChange = useCallback(
+    (value: boolean) => {
+      setVideoError(false);
+      if (
+        gameState === "video_playing" ||
+        gameState === "prediction" ||
+        gameState === "video_resuming"
+      ) {
+        setVideoKey((current) => current + 1);
+      }
+      setVideoMode(value ? "simulated" : realVideoMode);
+    },
+    [gameState, realVideoMode]
+  );
+
+  const helperText = useMemo(() => {
+    return "Demo mode: each round uses one of the bundled Messi clips and simulates the wallet confirmation locally.";
+  }, []);
 
   const showVideoPhase =
     gameState === "video_playing" ||
@@ -289,8 +332,22 @@ export default function AppPage() {
       <>
         <ResultScreen
           won={didWin}
+          claimErrorMessage={claimErrorMessage}
+          claimPhase={claimPhase}
+          claimRecipient={claimRecipient}
+          claimSuccessBody={
+            claimPhase === "success"
+              ? `Demo only: rewards would be sent to ${claimRecipient}.`
+              : undefined
+          }
+          claimable={didWin}
           userPrediction={lastPrediction}
           wagerUsdc={selectedWager}
+          onClaimModalClose={handleClaimModalClose}
+          onClaimRecipientChange={setClaimRecipient}
+          onClaimSubmit={() => {
+            void handleClaimSubmit();
+          }}
           onPlayAgain={handlePlayAgainFromResult}
           replaySrc={activeDemoSet.fullSrc}
           actualDirection={actualResult.direction}
@@ -316,6 +373,7 @@ export default function AppPage() {
     <>
       {gameState === "wager" && (
         <WagerScreen
+          helperText={helperText}
           selectedWager={selectedWager}
           wagerOptions={wagerOptions}
           playEnabled={playEnabled}
@@ -375,7 +433,9 @@ export default function AppPage() {
                 <PredictionPanel
                   totalSeconds={CONFIG.PREDICTION_TOTAL_SECONDS}
                   wagerUsdc={selectedWager}
-                  onComplete={handlePredictionComplete}
+                  onConfirmed={handlePredictionConfirmed}
+                  onLockPrediction={handleLockPrediction}
+                  onTimeout={handlePredictionTimeout}
                 />
               )}
             </div>

@@ -15,8 +15,16 @@ import { DemoClaimModal } from "./DemoClaimModal";
 
 type ResultScreenProps = {
   won: boolean;
+  claimErrorMessage?: string | null;
+  claimPhase?: "editing" | "error" | "submitting" | "success";
+  claimRecipient?: string;
+  claimSuccessBody?: string;
+  claimable?: boolean;
   userPrediction: { direction: Direction; outcome: Outcome } | null;
   wagerUsdc: number | null;
+  onClaimModalClose?: () => void;
+  onClaimRecipientChange?: (value: string) => void;
+  onClaimSubmit?: () => void;
   onPlayAgain: () => void;
   replaySrc: string;
   actualDirection: Direction;
@@ -35,8 +43,16 @@ function labelOutcome(o: Outcome) {
 
 export function ResultScreen({
   won,
+  claimErrorMessage,
+  claimPhase = "editing",
+  claimRecipient = "",
+  claimSuccessBody,
+  claimable,
   userPrediction,
   wagerUsdc,
+  onClaimModalClose,
+  onClaimRecipientChange,
+  onClaimSubmit,
   onPlayAgain,
   replaySrc,
   actualDirection,
@@ -45,11 +61,15 @@ export function ResultScreen({
   simulateVideo,
 }: ResultScreenProps) {
   const reduceMotion = usePrefersReducedMotion();
-  const canClaim = (settlement?.payoutTotal ?? 0) > 0;
+  const canClaim = claimable ?? (settlement?.payoutTotal ?? 0) > 0;
   const payoutTotal = settlement?.payoutTotal ?? 0;
   const profit = settlement?.profit ?? 0;
 
   const [claimOpen, setClaimOpen] = useState(false);
+  const handleClaimModalClose = useCallback(() => {
+    setClaimOpen(false);
+    onClaimModalClose?.();
+  }, [onClaimModalClose]);
 
   const handleShare = useCallback(() => {
     openPredictItTweetIntent({
@@ -82,10 +102,17 @@ export function ResultScreen({
       >
         <DemoClaimModal
           open={claimOpen}
+          closeLabel={appCopy.claimModal.close}
+          errorMessage={claimErrorMessage}
+          onClose={handleClaimModalClose}
+          onRecipientChange={onClaimRecipientChange ?? (() => {})}
+          onSubmit={onClaimSubmit ?? (() => {})}
+          phase={claimPhase}
+          recipient={claimRecipient}
+          submitLabel={appCopy.claimModal.submit}
+          successBody={claimSuccessBody}
           title={appCopy.claimModal.title}
           body={appCopy.claimModal.body}
-          closeLabel={appCopy.claimModal.close}
-          onClose={() => setClaimOpen(false)}
         />
         {!reduceMotion && <ConfettiBurst />}
         <motion.div
@@ -183,10 +210,17 @@ export function ResultScreen({
     >
       <DemoClaimModal
         open={claimOpen}
+        closeLabel={appCopy.claimModal.close}
+        errorMessage={claimErrorMessage}
+        onClose={handleClaimModalClose}
+        onRecipientChange={onClaimRecipientChange ?? (() => {})}
+        onSubmit={onClaimSubmit ?? (() => {})}
+        phase={claimPhase}
+        recipient={claimRecipient}
+        submitLabel={appCopy.claimModal.submit}
+        successBody={claimSuccessBody}
         title={appCopy.claimModal.title}
         body={appCopy.claimModal.body}
-        closeLabel={appCopy.claimModal.close}
-        onClose={() => setClaimOpen(false)}
       />
       <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col items-center text-center">
         <GameResultNav />

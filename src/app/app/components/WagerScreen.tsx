@@ -3,6 +3,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 
 type WagerScreenProps = {
+  helperText?: string | null;
+  isBusy?: boolean;
+  playLabel?: string;
   selectedWager: number | null;
   wagerOptions: readonly number[];
   playEnabled: boolean;
@@ -11,6 +14,9 @@ type WagerScreenProps = {
 };
 
 export function WagerScreen({
+  helperText,
+  isBusy = false,
+  playLabel = "Play with Testnet USDC",
   selectedWager,
   wagerOptions,
   playEnabled,
@@ -47,6 +53,7 @@ export function WagerScreen({
                   key={amount}
                   type="button"
                   onClick={() => onPickWager(amount)}
+                  disabled={isBusy}
                   className="embed-touch-target inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-semibold uppercase tracking-widest transition duration-300 sm:h-14"
                   style={{
                     background: isSelected ? "var(--accent)" : "var(--card)",
@@ -69,28 +76,28 @@ export function WagerScreen({
 
           <button
             type="button"
-            disabled={!playEnabled}
+            disabled={!playEnabled || isBusy}
             onClick={onPlay}
             className="embed-touch-target relative z-10 mt-8 inline-flex h-12 w-full max-w-xs items-center justify-center rounded-full px-10 text-sm font-semibold uppercase tracking-widest transition duration-300 sm:mt-10 sm:h-14 sm:w-auto sm:min-w-52"
             style={{
-              background: playEnabled
+              background: playEnabled && !isBusy
                 ? "var(--accent)"
                 : "color-mix(in srgb, var(--muted) 30%, transparent)",
-              color: playEnabled
+              color: playEnabled && !isBusy
                 ? "var(--background)"
                 : "color-mix(in srgb, var(--foreground) 45%, transparent)",
-              cursor: playEnabled ? "pointer" : "not-allowed",
-              boxShadow: playEnabled
+              cursor: playEnabled && !isBusy ? "pointer" : "not-allowed",
+              boxShadow: playEnabled && !isBusy
                 ? "0 12px 26px color-mix(in srgb, var(--accent) 25%, transparent)"
                 : "none",
             }}
           >
-            Play
+            {isBusy ? "Preparing..." : playLabel}
           </button>
 
           <p className="relative z-10 mt-5 max-w-2xl text-xs leading-relaxed text-[var(--muted-foreground)] sm:text-sm">
-            Disclaimer: If you do not select the shot direction or fail to submit in
-            time due to connection issues, you may lose the invested amount.
+            {helperText ??
+              "Disclaimer: If you do not select the shot direction or fail to submit in time due to connection issues, you may lose the invested amount."}
           </p>
         </section>
       </motion.main>

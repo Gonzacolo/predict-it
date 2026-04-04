@@ -2,6 +2,8 @@
 
 `Predict It!` is a Next.js prototype for predicting real sports moments before the play resolves. The public site lives at `/` and the interactive game flow lives at `/app`.
 
+The current `/app` experience is a local demo flow powered by the bundled video sets in `public/videos/demo/`.
+
 ## Run locally
 
 ```bash
@@ -9,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` and use **Play** to enter the demo flow.
+Open `http://localhost:3000` and use **Play** to enter the local demo flow.
 
 ## Environment
 
@@ -23,19 +25,32 @@ Copy `.env.example` to `.env.local` and adjust as needed.
 
 ## Demo assets
 
-This public repo includes the current `messi-1` demo assets.
+This public repo includes six local Messi demo sets.
 
-- The active demo lives under `public/videos/demo/messi-1/`.
+- Demo assets live under `public/videos/demo/<set-id>/`.
+- The game picks one of the registered Messi sets at random each round.
 - The app can still fall back to its simulated video flow if a video asset is missing or fails to load.
 - You can add more local demo sets later under `public/videos/demo/` without changing the overall structure.
 
-Current demo files:
+Current demo sets:
+
+```text
+public/videos/demo/
+  messi-goal-1-left/
+  messi-goal-2-right/
+  messi-goal-3-right/
+  messi-goal-4-right/
+  messi-miss-1-left/
+  messi-miss-2-right/
+```
+
+Each set contains:
 
 ```text
 public/
   videos/
     demo/
-      messi-1/
+      <set-id>/
         before.mp4
         after.mp4
         full.mp4
