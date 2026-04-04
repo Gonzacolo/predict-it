@@ -61,7 +61,7 @@ export function GameFlowChrome({
           </span>
         )}
         <ThemeToggle />
-        <button type="button" className={ctaClass}>
+        <button type="button" className={ctaClass} disabled>
           {appCopy.nav.connectWallet}
         </button>
       </div>

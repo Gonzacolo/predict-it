@@ -10,9 +10,14 @@ import { usePrefersReducedMotion } from "../lib/usePrefersReducedMotion";
 type UiStep = 1 | 2 | 3;
 
 type PredictionPanelProps = {
+  onConfirmed: (choice: { direction: Direction; outcome: Outcome }) => void;
+  onLockPrediction: (choice: {
+    direction: Direction;
+    outcome: Outcome;
+  }) => Promise<void>;
+  onTimeout: () => void;
   totalSeconds: number;
   wagerUsdc: number | null;
-  onComplete: (choice: { direction: Direction; outcome: Outcome } | null) => void;
 };
 
 const rowVariants = {
@@ -33,9 +38,11 @@ const itemVariants = {
 };
 
 export function PredictionPanel({
+  onConfirmed,
+  onLockPrediction,
+  onTimeout,
   totalSeconds,
   wagerUsdc,
-  onComplete,
 }: PredictionPanelProps) {
   const reduceMotion = usePrefersReducedMotion();
 
@@ -54,7 +61,8 @@ export function PredictionPanel({
   const firedRef = useRef(false);
 
   const [walletOpen, setWalletOpen] = useState(false);
-  const [walletPhase, setWalletPhase] = useState<"waiting" | "success">(
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const [walletPhase, setWalletPhase] = useState<"error" | "waiting" | "success">(
     "waiting"
   );
   const pendingChoiceRef = useRef<{
@@ -70,30 +78,40 @@ export function PredictionPanel({
     outcomeRef.current = outcome;
   }, [outcome]);
 
-  const finish = useCallback(
-    (choice: { direction: Direction; outcome: Outcome } | null) => {
-      if (firedRef.current) return;
-      firedRef.current = true;
-      setWalletOpen(false);
-      onComplete(choice);
-    },
-    [onComplete]
-  );
+  const finishAsTimeout = useCallback(() => {
+    if (firedRef.current) return;
+    firedRef.current = true;
+    setWalletOpen(false);
+    onTimeout();
+  }, [onTimeout]);
 
-  const triggerWalletConfirmation = useCallback(() => {
+  const triggerWalletConfirmation = useCallback(async () => {
     if (firedRef.current || walletOpen) return;
     const d = directionRef.current;
     const o = outcomeRef.current;
 
     if (d === null || o === null) {
-      finish(null);
+      finishAsTimeout();
       return;
     }
 
     pendingChoiceRef.current = { direction: d, outcome: o };
+    setWalletError(null);
     setWalletPhase("waiting");
     setWalletOpen(true);
-  }, [finish, walletOpen]);
+
+    try {
+      await onLockPrediction({ direction: d, outcome: o });
+      setWalletPhase("success");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The transaction could not be confirmed.";
+      setWalletError(message);
+      setWalletPhase("error");
+    }
+  }, [finishAsTimeout, onLockPrediction, walletOpen]);
 
   useEffect(() => {
     if (firedRef.current) return;
@@ -109,9 +127,9 @@ export function PredictionPanel({
       setRemainingMs(left);
       if (left <= 0) {
         if (uiStepRef.current === 3) {
-          triggerWalletConfirmation();
+          void triggerWalletConfirmation();
         } else {
-          finish(null);
+          finishAsTimeout();
         }
         return;
       }
@@ -119,13 +137,7 @@ export function PredictionPanel({
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [totalSeconds, finish, triggerWalletConfirmation]);
-
-  useEffect(() => {
-    if (!walletOpen || walletPhase !== "waiting") return;
-    const id = window.setTimeout(() => setWalletPhase("success"), 1700);
-    return () => window.clearTimeout(id);
-  }, [walletOpen, walletPhase]);
+  }, [totalSeconds, finishAsTimeout, triggerWalletConfirmation]);
 
   const secondsLeft = Math.ceil(remainingMs / 1000);
   const progress = useMemo(
@@ -159,13 +171,21 @@ export function PredictionPanel({
   };
 
   const handleWalletContinue = () => {
+    if (walletPhase !== "success") {
+      finishAsTimeout();
+      return;
+    }
+
     const c = pendingChoiceRef.current;
     pendingChoiceRef.current = null;
     if (!c) {
-      finish(null);
+      finishAsTimeout();
       return;
     }
-    finish(c);
+    if (firedRef.current) return;
+    firedRef.current = true;
+    setWalletOpen(false);
+    onConfirmed(c);
   };
 
   const showTimer = !walletOpen;
@@ -174,6 +194,7 @@ export function PredictionPanel({
     <>
       <DemoWalletModal
         open={walletOpen}
+        errorText={walletError}
         phase={walletPhase}
         title={appCopy.walletModal.title}
         waitingText={appCopy.walletModal.waiting}

@@ -3,8 +3,10 @@
 import { useEffect, useRef } from "react";
 
 type DemoWalletModalProps = {
+  errorText?: string | null;
+  errorTitle?: string;
   open: boolean;
-  phase: "waiting" | "success";
+  phase: "error" | "success" | "waiting";
   title: string;
   waitingText: string;
   successText: string;
@@ -14,6 +16,8 @@ type DemoWalletModalProps = {
 };
 
 export function DemoWalletModal({
+  errorText,
+  errorTitle = "Transaction failed",
   open,
   phase,
   title,
@@ -28,7 +32,7 @@ export function DemoWalletModal({
 
   useEffect(() => {
     if (!open) return;
-    if (phase === "success") {
+    if (phase === "success" || phase === "error") {
       continueRef.current?.focus();
     } else {
       panelRef.current?.focus();
@@ -38,7 +42,7 @@ export function DemoWalletModal({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && phase === "success") onContinue();
+      if (e.key === "Escape" && phase !== "waiting") onContinue();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -51,7 +55,7 @@ export function DemoWalletModal({
       className="fixed inset-0 z-[80] flex items-center justify-center bg-[var(--game-overlay)] px-4 backdrop-blur-sm"
       role="presentation"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget && phase === "success") onContinue();
+        if (e.target === e.currentTarget && phase !== "waiting") onContinue();
       }}
     >
       <div
@@ -80,7 +84,7 @@ export function DemoWalletModal({
               {waitingText}
             </p>
           </div>
-        ) : (
+        ) : phase === "success" ? (
           <div className="mt-6 flex flex-col gap-4">
             <p className="text-center text-lg font-medium text-[var(--game-foreground)]">
               {successText}
@@ -93,6 +97,23 @@ export function DemoWalletModal({
               type="button"
               onClick={onContinue}
               className="game-cta-primary embed-touch-target mt-2 w-full rounded-xl text-sm font-semibold uppercase tracking-widest"
+            >
+              {continueLabel}
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 flex flex-col gap-4">
+            <p className="text-center text-lg font-medium text-rose-400">
+              {errorTitle}
+            </p>
+            <p className="text-center text-sm text-[var(--game-foreground-muted)]">
+              {errorText ?? "The wallet rejected or failed to send the transaction."}
+            </p>
+            <button
+              ref={continueRef}
+              type="button"
+              onClick={onContinue}
+              className="embed-touch-target mt-2 w-full rounded-xl border border-[var(--game-border)] px-4 py-3 text-sm font-semibold uppercase tracking-widest text-[var(--game-foreground)]"
             >
               {continueLabel}
             </button>

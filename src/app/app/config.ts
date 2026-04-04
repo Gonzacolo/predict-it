@@ -16,22 +16,87 @@ export type DemoVideoSet = {
  * Local demo videos are optional in this public repo.
  * When the .mp4 files are missing, the app falls back to the simulated flow.
  */
-export const DEMO_VIDEO_SETS: Record<string, DemoVideoSet> = {
-  "messi-1": {
-    id: "messi-1",
-    beforeSrc: "/videos/demo/messi-1/before.mp4",
-    afterSrc: "/videos/demo/messi-1/after.mp4",
-    fullSrc: "/videos/demo/messi-1/full.mp4",
-    previewSrc: "/videos/demo/messi-1/full.mp4",
-    resultSrc: "/videos/demo/messi-1/result.json",
+export const DEMO_VIDEO_SETS = {
+  "messi-miss-1-left": {
+    id: "messi-miss-1-left",
+    beforeSrc: "/videos/demo/messi-miss-1-left/before.mp4",
+    afterSrc: "/videos/demo/messi-miss-1-left/after.mp4",
+    fullSrc: "/videos/demo/messi-miss-1-left/full.mp4",
+    previewSrc: "/videos/demo/messi-miss-1-left/full.mp4",
+    resultSrc: "/videos/demo/messi-miss-1-left/result.json",
     poster: "",
   },
-};
+  "messi-goal-1-left": {
+    id: "messi-goal-1-left",
+    beforeSrc: "/videos/demo/messi-goal-1-left/before.mp4",
+    afterSrc: "/videos/demo/messi-goal-1-left/after.mp4",
+    fullSrc: "/videos/demo/messi-goal-1-left/full.mp4",
+    previewSrc: "/videos/demo/messi-goal-1-left/full.mp4",
+    resultSrc: "/videos/demo/messi-goal-1-left/result.json",
+    poster: "",
+  },
+  "messi-goal-2-right": {
+    id: "messi-goal-2-right",
+    beforeSrc: "/videos/demo/messi-goal-2-right/before.mp4",
+    afterSrc: "/videos/demo/messi-goal-2-right/after.mp4",
+    fullSrc: "/videos/demo/messi-goal-2-right/full.mp4",
+    previewSrc: "/videos/demo/messi-goal-2-right/full.mp4",
+    resultSrc: "/videos/demo/messi-goal-2-right/result.json",
+    poster: "",
+  },
+  "messi-goal-3-right": {
+    id: "messi-goal-3-right",
+    beforeSrc: "/videos/demo/messi-goal-3-right/before.mp4",
+    afterSrc: "/videos/demo/messi-goal-3-right/after.mp4",
+    fullSrc: "/videos/demo/messi-goal-3-right/full.mp4",
+    previewSrc: "/videos/demo/messi-goal-3-right/full.mp4",
+    resultSrc: "/videos/demo/messi-goal-3-right/result.json",
+    poster: "",
+  },
+  "messi-goal-4-right": {
+    id: "messi-goal-4-right",
+    beforeSrc: "/videos/demo/messi-goal-4-right/before.mp4",
+    afterSrc: "/videos/demo/messi-goal-4-right/after.mp4",
+    fullSrc: "/videos/demo/messi-goal-4-right/full.mp4",
+    previewSrc: "/videos/demo/messi-goal-4-right/full.mp4",
+    resultSrc: "/videos/demo/messi-goal-4-right/result.json",
+    poster: "",
+  },
+  "messi-miss-2-right": {
+    id: "messi-miss-2-right",
+    beforeSrc: "/videos/demo/messi-miss-2-right/before.mp4",
+    afterSrc: "/videos/demo/messi-miss-2-right/after.mp4",
+    fullSrc: "/videos/demo/messi-miss-2-right/full.mp4",
+    previewSrc: "/videos/demo/messi-miss-2-right/full.mp4",
+    resultSrc: "/videos/demo/messi-miss-2-right/result.json",
+    poster: "",
+  },
+} as const satisfies Record<string, DemoVideoSet>;
 
-export const ACTIVE_DEMO_SET_ID = "messi-1";
+export type DemoVideoSetId = keyof typeof DEMO_VIDEO_SETS;
+
+export const DEMO_VIDEO_SET_IDS = Object.keys(DEMO_VIDEO_SETS) as DemoVideoSetId[];
+
+export const ACTIVE_DEMO_SET_ID: DemoVideoSetId = "messi-miss-1-left";
 
 export function getDemoVideoSet(setId: string): DemoVideoSet {
-  return DEMO_VIDEO_SETS[setId] ?? DEMO_VIDEO_SETS[ACTIVE_DEMO_SET_ID];
+  if (setId in DEMO_VIDEO_SETS) {
+    return DEMO_VIDEO_SETS[setId as DemoVideoSetId];
+  }
+
+  return DEMO_VIDEO_SETS[ACTIVE_DEMO_SET_ID];
+}
+
+export function getRandomDemoSetId(excludeId?: DemoVideoSetId): DemoVideoSetId {
+  const candidateIds =
+    excludeId && DEMO_VIDEO_SET_IDS.length > 1
+      ? DEMO_VIDEO_SET_IDS.filter((id) => id !== excludeId)
+      : DEMO_VIDEO_SET_IDS;
+
+  return (
+    candidateIds[Math.floor(Math.random() * candidateIds.length)] ??
+    ACTIVE_DEMO_SET_ID
+  );
 }
 
 export const ACTIVE_DEMO_VIDEO_SET = getDemoVideoSet(ACTIVE_DEMO_SET_ID);
@@ -54,7 +119,7 @@ export const CONFIG = {
   /** Tiempo aproximado (segundos) para la intro simulada si faltan assets. */
   SIMULATED_INTRO_SECONDS: 4.5,
   /** Tiempo total (segundos) para completar los 3 pasos de predicción */
-  PREDICTION_TOTAL_SECONDS: 10,
+  PREDICTION_TOTAL_SECONDS: 15,
   WINNINGS_AMOUNT: 10,
 } as const;
 
