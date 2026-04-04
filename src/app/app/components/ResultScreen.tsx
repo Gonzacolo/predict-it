@@ -14,7 +14,9 @@ import { usePrefersReducedMotion } from "../lib/usePrefersReducedMotion";
 import { DemoClaimModal } from "./DemoClaimModal";
 
 type ResultScreenProps = {
+  claimDestination?: "connected" | "recipient";
   won: boolean;
+  connectedWalletAddress?: string;
   claimErrorMessage?: string | null;
   claimPhase?: "editing" | "error" | "submitting" | "success";
   claimRecipient?: string;
@@ -23,6 +25,7 @@ type ResultScreenProps = {
   userPrediction: { direction: Direction; outcome: Outcome } | null;
   wagerUsdc: number | null;
   onClaimModalClose?: () => void;
+  onClaimDestinationChange?: (value: "connected" | "recipient") => void;
   onClaimRecipientChange?: (value: string) => void;
   onClaimSubmit?: () => void;
   onPlayAgain: () => void;
@@ -42,7 +45,9 @@ function labelOutcome(o: Outcome) {
 }
 
 export function ResultScreen({
+  claimDestination = "connected",
   won,
+  connectedWalletAddress = "",
   claimErrorMessage,
   claimPhase = "editing",
   claimRecipient = "",
@@ -51,6 +56,7 @@ export function ResultScreen({
   userPrediction,
   wagerUsdc,
   onClaimModalClose,
+  onClaimDestinationChange,
   onClaimRecipientChange,
   onClaimSubmit,
   onPlayAgain,
@@ -89,13 +95,16 @@ export function ResultScreen({
     actualOutcome,
   ]);
 
-  const shellClass =
-    "game-dark game-screen-fill fixed inset-0 z-[60] flex min-h-dvh w-full flex-col items-center justify-center overflow-y-auto overflow-x-clip px-4 py-[calc(2.5rem+var(--embed-safe-top))] pb-[calc(2.5rem+var(--embed-safe-bottom))]";
+  /** Scroll on outer only; inner uses min-h-dvh + justify-center so short content stays centered without breaking overflow scroll. */
+  const resultOverlayClass =
+    "game-dark game-screen-fill fixed inset-0 z-[60] overflow-y-auto overflow-x-clip overscroll-y-contain";
+  const resultScrollBodyClass =
+    "relative z-10 flex min-h-dvh w-full flex-col items-center justify-center px-4 py-[calc(2.5rem+var(--embed-safe-top))] pb-[calc(2.5rem+var(--embed-safe-bottom))]";
 
   if (won) {
     return (
       <motion.div
-        className={shellClass}
+        className={resultOverlayClass}
         initial={reduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: reduceMotion ? 0 : 0.45 }}
@@ -103,11 +112,21 @@ export function ResultScreen({
         <DemoClaimModal
           open={claimOpen}
           closeLabel={appCopy.claimModal.close}
+          connectedWalletAddress={connectedWalletAddress}
+          connectedWalletHint={appCopy.claimModal.connectedWalletHint}
+          connectedWalletTitle={appCopy.claimModal.connectedWalletTitle}
+          destinationLabel={appCopy.claimModal.destinationLabel}
           errorMessage={claimErrorMessage}
+          onDestinationChange={onClaimDestinationChange ?? (() => {})}
           onClose={handleClaimModalClose}
           onRecipientChange={onClaimRecipientChange ?? (() => {})}
           onSubmit={onClaimSubmit ?? (() => {})}
           phase={claimPhase}
+          recipientInputLabel={appCopy.claimModal.recipientInputLabel}
+          recipientInputPlaceholder={appCopy.claimModal.recipientInputPlaceholder}
+          recipientMode={claimDestination}
+          recipientWalletHint={appCopy.claimModal.recipientWalletHint}
+          recipientWalletTitle={appCopy.claimModal.recipientWalletTitle}
           recipient={claimRecipient}
           submitLabel={appCopy.claimModal.submit}
           successBody={claimSuccessBody}
@@ -115,16 +134,17 @@ export function ResultScreen({
           body={appCopy.claimModal.body}
         />
         {!reduceMotion && <ConfettiBurst />}
-        <motion.div
-          className="relative z-10 mx-auto flex w-full max-w-lg flex-col items-center text-center"
-          initial={reduceMotion ? false : { scale: 0.92, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          transition={
-            reduceMotion
-              ? { duration: 0 }
-              : { type: "spring", stiffness: 260, damping: 22 }
-          }
-        >
+        <div className={resultScrollBodyClass}>
+          <motion.div
+            className="mx-auto flex w-full max-w-lg flex-col items-center text-center"
+            initial={reduceMotion ? false : { scale: 0.92, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 260, damping: 22 }
+            }
+          >
           <GameResultNav />
           <div className="mb-6 w-full">
             <div className="relative mx-auto aspect-video w-full max-w-xl overflow-hidden rounded-2xl bg-[var(--game-surface-strong)] ring-1 ring-[var(--game-border)]">
@@ -188,22 +208,16 @@ export function ResultScreen({
             >
               {appCopy.result.shareX}
             </button>
-            <button
-              type="button"
-              onClick={onPlayAgain}
-              className="embed-touch-target inline-flex w-full max-w-xs items-center justify-center rounded-full border border-[var(--game-border)] px-8 text-sm font-medium uppercase tracking-widest text-[var(--game-foreground-soft)] transition hover:border-[var(--game-border-strong)] hover:text-[var(--game-foreground)] sm:w-auto"
-            >
-              {appCopy.result.playAgain}
-            </button>
           </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </motion.div>
     );
   }
 
   return (
     <motion.div
-      className={shellClass}
+      className={resultOverlayClass}
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: reduceMotion ? 0 : 0.4 }}
@@ -211,18 +225,29 @@ export function ResultScreen({
       <DemoClaimModal
         open={claimOpen}
         closeLabel={appCopy.claimModal.close}
+        connectedWalletAddress={connectedWalletAddress}
+        connectedWalletHint={appCopy.claimModal.connectedWalletHint}
+        connectedWalletTitle={appCopy.claimModal.connectedWalletTitle}
+        destinationLabel={appCopy.claimModal.destinationLabel}
         errorMessage={claimErrorMessage}
+        onDestinationChange={onClaimDestinationChange ?? (() => {})}
         onClose={handleClaimModalClose}
         onRecipientChange={onClaimRecipientChange ?? (() => {})}
         onSubmit={onClaimSubmit ?? (() => {})}
         phase={claimPhase}
+        recipientInputLabel={appCopy.claimModal.recipientInputLabel}
+        recipientInputPlaceholder={appCopy.claimModal.recipientInputPlaceholder}
+        recipientMode={claimDestination}
+        recipientWalletHint={appCopy.claimModal.recipientWalletHint}
+        recipientWalletTitle={appCopy.claimModal.recipientWalletTitle}
         recipient={claimRecipient}
         submitLabel={appCopy.claimModal.submit}
         successBody={claimSuccessBody}
         title={appCopy.claimModal.title}
         body={appCopy.claimModal.body}
       />
-      <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col items-center text-center">
+      <div className={resultScrollBodyClass}>
+        <div className="mx-auto flex w-full max-w-lg flex-col items-center text-center">
         <GameResultNav />
         <div className="mb-6 w-full">
           <div className="relative mx-auto aspect-video w-full max-w-xl overflow-hidden rounded-2xl bg-[var(--game-surface-strong)] ring-1 ring-[var(--game-border)]">
@@ -294,6 +319,7 @@ export function ResultScreen({
           >
             {appCopy.result.shareX}
           </button>
+        </div>
         </div>
       </div>
     </motion.div>

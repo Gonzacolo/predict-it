@@ -42,6 +42,7 @@ const showGameDevHud = isProd
   : devHudFlag !== "false";
 
 type ClaimPhase = "editing" | "error" | "submitting" | "success";
+type ClaimDestination = "connected" | "recipient";
 type GameState =
   | "wager"
   | "countdown"
@@ -56,11 +57,15 @@ function isEvmAddress(value: string) {
   return /^0x[a-fA-F0-9]{40}$/.test(value);
 }
 
+const DEMO_CONNECTED_WALLET = "0x5A74f2A3fBAb36E39A68D7d4f8d8D2f9d2B0C1e7";
+
 export default function AppPage() {
   const [actualResult, setActualResult] = useState<DemoVideoResult>(
     DEFAULT_DEMO_VIDEO_RESULT
   );
   const [claimErrorMessage, setClaimErrorMessage] = useState<string | null>(null);
+  const [claimDestination, setClaimDestination] =
+    useState<ClaimDestination>("connected");
   const [claimPhase, setClaimPhase] = useState<ClaimPhase>("editing");
   const [claimRecipient, setClaimRecipient] = useState("");
   const [didWin, setDidWin] = useState(false);
@@ -124,6 +129,7 @@ export default function AppPage() {
   const resetRoundState = useCallback(() => {
     lastPredictionRef.current = null;
     setClaimErrorMessage(null);
+    setClaimDestination("connected");
     setClaimPhase("editing");
     setClaimRecipient("");
     setDidWin(false);
@@ -197,7 +203,12 @@ export default function AppPage() {
   }, [actualResult, selectedWager]);
 
   const handleClaimSubmit = useCallback(async () => {
-    if (!isEvmAddress(claimRecipient)) {
+    const recipientValue =
+      claimDestination === "connected"
+        ? DEMO_CONNECTED_WALLET
+        : claimRecipient.trim();
+
+    if (!isEvmAddress(recipientValue)) {
       setClaimPhase("error");
       setClaimErrorMessage("Enter a valid EVM wallet address.");
       return;
@@ -206,8 +217,11 @@ export default function AppPage() {
     setClaimErrorMessage(null);
     setClaimPhase("submitting");
     await new Promise((resolve) => window.setTimeout(resolve, 900));
+    if (claimDestination === "recipient") {
+      setClaimRecipient(recipientValue);
+    }
     setClaimPhase("success");
-  }, [claimRecipient]);
+  }, [claimDestination, claimRecipient]);
 
   const handleClaimModalClose = useCallback(() => {
     if (claimPhase !== "success") {
@@ -215,6 +229,17 @@ export default function AppPage() {
     }
     setClaimErrorMessage(null);
   }, [claimPhase]);
+
+  const handleClaimDestinationChange = useCallback(
+    (value: ClaimDestination) => {
+      setClaimDestination(value);
+      setClaimErrorMessage(null);
+      if (claimPhase === "error") {
+        setClaimPhase("editing");
+      }
+    },
+    [claimPhase]
+  );
 
   const handleVideoLoadError = useCallback(() => {
     setVideoError(true);
@@ -332,18 +357,23 @@ export default function AppPage() {
       <>
         <ResultScreen
           won={didWin}
+          claimDestination={claimDestination}
           claimErrorMessage={claimErrorMessage}
           claimPhase={claimPhase}
           claimRecipient={claimRecipient}
+          connectedWalletAddress={DEMO_CONNECTED_WALLET}
           claimSuccessBody={
             claimPhase === "success"
-              ? `Demo only: rewards would be sent to ${claimRecipient}.`
+              ? claimDestination === "connected"
+                ? `Demo only: rewards would be sent to your connected wallet (${DEMO_CONNECTED_WALLET}).`
+                : `Demo only: rewards would be sent to ${claimRecipient}.`
               : undefined
           }
           claimable={didWin}
           userPrediction={lastPrediction}
           wagerUsdc={selectedWager}
           onClaimModalClose={handleClaimModalClose}
+          onClaimDestinationChange={handleClaimDestinationChange}
           onClaimRecipientChange={setClaimRecipient}
           onClaimSubmit={() => {
             void handleClaimSubmit();
