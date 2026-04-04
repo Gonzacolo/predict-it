@@ -23,13 +23,13 @@ Copy `.env.example` to `.env.local` and adjust as needed.
 
 ## Demo assets
 
-This public repo intentionally does **not** include the local `.mp4` demo videos used during development.
+This public repo includes the current `messi-1` demo assets.
 
-- If the videos are missing, the app automatically falls back to its simulated video flow.
-- The demo outcome still comes from `public/videos/demo/messi-1/result.json`.
-- You can add local video assets later under `public/videos/demo/messi-1/` without changing the code structure.
+- The active demo lives under `public/videos/demo/messi-1/`.
+- The app can still fall back to its simulated video flow if a video asset is missing or fails to load.
+- You can add more local demo sets later under `public/videos/demo/` without changing the overall structure.
 
-Expected optional local files:
+Current demo files:
 
 ```text
 public/
