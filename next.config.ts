@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: [
+    "@dynamic-labs/sdk-react-core",
+    "@dynamic-labs/ethereum",
+    "@dynamic-labs/sdk-api-core",
+  ],
 };
 
 export default nextConfig;

@@ -75,6 +75,19 @@ export const DEMO_VIDEO_SETS = {
 
 export type DemoVideoSetId = keyof typeof DEMO_VIDEO_SETS;
 
+/**
+ * On-chain `clipId` per demo set. Must match `setClip` on the deployed escrow
+ * (same outcome as each set's `result.json`).
+ */
+export const ONCHAIN_CLIP_ID_BY_DEMO_SET: Record<DemoVideoSetId, bigint> = {
+  "messi-miss-1-left": BigInt(1),
+  "messi-goal-1-left": BigInt(2),
+  "messi-goal-2-right": BigInt(3),
+  "messi-goal-3-right": BigInt(4),
+  "messi-goal-4-right": BigInt(5),
+  "messi-miss-2-right": BigInt(6),
+};
+
 export const DEMO_VIDEO_SET_IDS = Object.keys(DEMO_VIDEO_SETS) as DemoVideoSetId[];
 
 export const ACTIVE_DEMO_SET_ID: DemoVideoSetId = "messi-miss-1-left";
