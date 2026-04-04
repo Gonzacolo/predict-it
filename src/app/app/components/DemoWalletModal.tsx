@@ -10,7 +10,6 @@ type DemoWalletModalProps = {
   title: string;
   waitingText: string;
   successText: string;
-  successSub: string;
   continueLabel: string;
   onContinue: () => void;
 };
@@ -23,7 +22,6 @@ export function DemoWalletModal({
   title,
   waitingText,
   successText,
-  successSub,
   continueLabel,
   onContinue,
 }: DemoWalletModalProps) {
@@ -67,12 +65,14 @@ export function DemoWalletModal({
         tabIndex={-1}
         className="w-full max-w-md rounded-2xl border border-[var(--game-border)] bg-[var(--game-surface-strong)] p-6 shadow-2xl outline-none sm:p-8"
       >
-        <h2
-          id="demo-wallet-title"
-          className="font-[family-name:var(--font-bebas)] text-xl uppercase tracking-[0.2em] text-[var(--game-electric)] sm:text-2xl"
-        >
-          {title}
-        </h2>
+        {phase !== "success" ? (
+          <h2
+            id="demo-wallet-title"
+            className="font-[family-name:var(--font-bebas)] text-xl uppercase tracking-[0.2em] text-[var(--game-electric)] sm:text-2xl"
+          >
+            {title}
+          </h2>
+        ) : null}
 
         {phase === "waiting" ? (
           <div className="mt-6 flex flex-col items-center gap-4">
@@ -85,12 +85,12 @@ export function DemoWalletModal({
             </p>
           </div>
         ) : phase === "success" ? (
-          <div className="mt-6 flex flex-col gap-4">
-            <p className="text-center text-lg font-medium text-[var(--game-foreground)]">
+          <div className="flex flex-col gap-4">
+            <p
+              id="demo-wallet-title"
+              className="text-center text-lg font-medium text-[var(--game-foreground)]"
+            >
               {successText}
-            </p>
-            <p className="text-center text-sm text-[var(--game-foreground-muted)]">
-              {successSub}
             </p>
             <button
               ref={continueRef}

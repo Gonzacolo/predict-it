@@ -199,7 +199,6 @@ export function PredictionPanel({
         title={appCopy.walletModal.title}
         waitingText={appCopy.walletModal.waiting}
         successText={appCopy.walletModal.success}
-        successSub={appCopy.walletModal.successSub}
         continueLabel={appCopy.walletModal.continue}
         onContinue={handleWalletContinue}
       />

@@ -4,11 +4,21 @@ import { useEffect, useRef } from "react";
 
 type DemoClaimModalProps = {
   closeLabel: string;
+  connectedWalletAddress: string;
+  connectedWalletHint: string;
+  connectedWalletTitle: string;
+  destinationLabel: string;
   errorMessage?: string | null;
+  onDestinationChange: (value: "connected" | "recipient") => void;
   onRecipientChange: (value: string) => void;
   onSubmit: () => void;
   open: boolean;
   phase: "editing" | "error" | "submitting" | "success";
+  recipientInputLabel: string;
+  recipientInputPlaceholder: string;
+  recipientMode: "connected" | "recipient";
+  recipientWalletHint: string;
+  recipientWalletTitle: string;
   recipient: string;
   submitLabel: string;
   successBody?: string;
@@ -19,11 +29,21 @@ type DemoClaimModalProps = {
 
 export function DemoClaimModal({
   closeLabel,
+  connectedWalletAddress,
+  connectedWalletHint,
+  connectedWalletTitle,
+  destinationLabel,
   errorMessage,
+  onDestinationChange,
   onRecipientChange,
   onSubmit,
   open,
   phase,
+  recipientInputLabel,
+  recipientInputPlaceholder,
+  recipientMode,
+  recipientWalletHint,
+  recipientWalletTitle,
   recipient,
   submitLabel,
   successBody,
@@ -36,12 +56,12 @@ export function DemoClaimModal({
 
   useEffect(() => {
     if (!open) return;
-    if (phase === "editing" || phase === "error") {
+    if ((phase === "editing" || phase === "error") && recipientMode === "recipient") {
       inputRef.current?.focus();
     } else {
       closeRef.current?.focus();
     }
-  }, [open, phase]);
+  }, [open, phase, recipientMode]);
 
   useEffect(() => {
     if (!open) return;
@@ -80,21 +100,67 @@ export function DemoClaimModal({
 
         {phase === "editing" || phase === "error" ? (
           <>
-            <label
-              htmlFor="claim-recipient"
-              className="mt-6 block text-xs uppercase tracking-widest text-[var(--game-foreground-muted)]"
-            >
-              Recipient wallet
-            </label>
-            <input
-              id="claim-recipient"
-              ref={inputRef}
-              type="text"
-              value={recipient}
-              onChange={(event) => onRecipientChange(event.target.value)}
-              placeholder="0x..."
-              className="mt-2 w-full rounded-xl border border-[var(--game-border)] bg-[var(--game-surface)] px-4 py-3 text-sm text-[var(--game-foreground)] outline-none"
-            />
+            <p className="mt-6 text-xs uppercase tracking-widest text-[var(--game-foreground-muted)]">
+              {destinationLabel}
+            </p>
+            <div className="mt-3 grid gap-3">
+              <button
+                type="button"
+                onClick={() => onDestinationChange("connected")}
+                aria-pressed={recipientMode === "connected"}
+                className={`w-full rounded-xl border px-4 py-3 text-left transition ${
+                  recipientMode === "connected"
+                    ? "border-[var(--game-electric)] bg-[var(--game-surface-elevated)]"
+                    : "border-[var(--game-border)] bg-[var(--game-surface)]"
+                }`}
+              >
+                <p className="text-sm font-semibold text-[var(--game-foreground)]">
+                  {connectedWalletTitle}
+                </p>
+                <p className="mt-1 text-xs text-[var(--game-foreground-muted)]">
+                  {connectedWalletHint}
+                </p>
+                <p className="mt-2 text-xs font-medium text-[var(--game-electric)]">
+                  {connectedWalletAddress}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => onDestinationChange("recipient")}
+                aria-pressed={recipientMode === "recipient"}
+                className={`w-full rounded-xl border px-4 py-3 text-left transition ${
+                  recipientMode === "recipient"
+                    ? "border-[var(--game-electric)] bg-[var(--game-surface-elevated)]"
+                    : "border-[var(--game-border)] bg-[var(--game-surface)]"
+                }`}
+              >
+                <p className="text-sm font-semibold text-[var(--game-foreground)]">
+                  {recipientWalletTitle}
+                </p>
+                <p className="mt-1 text-xs text-[var(--game-foreground-muted)]">
+                  {recipientWalletHint}
+                </p>
+              </button>
+            </div>
+            {recipientMode === "recipient" ? (
+              <>
+                <label
+                  htmlFor="claim-recipient"
+                  className="mt-6 block text-xs uppercase tracking-widest text-[var(--game-foreground-muted)]"
+                >
+                  {recipientInputLabel}
+                </label>
+                <input
+                  id="claim-recipient"
+                  ref={inputRef}
+                  type="text"
+                  value={recipient}
+                  onChange={(event) => onRecipientChange(event.target.value)}
+                  placeholder={recipientInputPlaceholder}
+                  className="mt-2 w-full rounded-xl border border-[var(--game-border)] bg-[var(--game-surface)] px-4 py-3 text-sm text-[var(--game-foreground)] outline-none"
+                />
+              </>
+            ) : null}
             {errorMessage ? (
               <p className="mt-3 text-sm text-rose-400">{errorMessage}</p>
             ) : null}
