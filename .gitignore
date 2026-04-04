@@ -17,6 +17,11 @@
 /.next/
 /out/
 
+# foundry
+/cache/
+/broadcast/
+/contracts/out/
+
 # production
 /build
 
