@@ -10,7 +10,7 @@ type WagerScreenProps = {
   wagerOptions: readonly number[];
   playEnabled: boolean;
   onPickWager: (amount: number) => void;
-  onPlay: () => void;
+  onPlay: () => void | Promise<void>;
 };
 
 export function WagerScreen({
