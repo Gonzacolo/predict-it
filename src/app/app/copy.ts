@@ -1,0 +1,71 @@
+/** Centralized copy: landing and /app in English. */
+
+export const appCopy = {
+  nav: {
+    home: "Home",
+    howItWorks: "How It Works",
+    leaderboard: "Leaderboard",
+    connectWallet: "Connect wallet",
+    wager: (usdc: number) => `Wager: ${usdc} USDC`,
+    wagerPending: "Choose your wager",
+  },
+  video: {
+    tapToStart: "Tap to start",
+    loading: "Loading video...",
+    unavailable: "Video unavailable",
+    unavailableHint:
+      "Add before.mp4 and after.mp4 under public/videos/demo/<set-id>, or switch to the simulated fallback in the gear menu.",
+    retry: "Retry",
+  },
+  prediction: {
+    step1: "Step 1 · Side",
+    step1Q: "Which side will the shot go?",
+    step2: "Step 2 · Outcome",
+    step2Q: "Goal or miss?",
+    step3: "Step 3 · Locking",
+    yourPick: "Your prediction",
+    confirmHint:
+      "Your prediction will lock automatically on-chain when the countdown ends.",
+    confirmCta: "Auto-confirming when the timer ends",
+    timerReady: "Ready to sign",
+    left: "Left",
+    right: "Right",
+    goal: "Goal",
+    miss: "Miss",
+  },
+  walletModal: {
+    title: "Sign in your wallet",
+    waiting: "Waiting for wallet confirmation...",
+    success: "Prediction recorded",
+    successSub: "Your on-chain transaction is now being processed.",
+    continue: "Continue",
+  },
+  claimModal: {
+    title: "Claim rewards",
+    body: "Your payout is being prepared and will be available shortly.",
+    close: "Got it",
+  },
+  result: {
+    winLabel: "Payout",
+    winTitle: "Profitable round",
+    loseLabel: "Settlement",
+    loseTitle: "Round settled",
+    playedWith: (n: number) => `You played with ${n} USDC`,
+    yourPrediction: "Your prediction",
+    whatHappened: "What happened",
+    incomplete: "Incomplete / time expired",
+    claimRewards: "Claim rewards",
+    playAgain: "Play again",
+    tryAgain: "Try again",
+    shareX: "Share on X",
+    simulatedReplay: "Loop replay (placeholder)",
+    simulatedReplayHint:
+      "Add full.mp4 under public/videos/demo/<set-id> to show the complete replay.",
+    payoutSummary: "Payout summary",
+    directionPayout: "Direction payout",
+    outcomePayout: "Outcome payout",
+    totalPayout: "Total payout",
+    profitLoss: "Profit / Loss",
+    houseFee: "House fee",
+  },
+} as const;

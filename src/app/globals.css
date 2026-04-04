@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5f7f5;
+  --foreground: #0e1a11;
+  --muted: #6b7a6d;
+  --muted-bg: #eaefe9;
+  --accent: #166534;
+  --accent-light: #dcfce7;
+  --accent-mid: #16a34a;
+  --card: #ffffff;
+  --border: rgba(0, 0, 0, 0.07);
+  --nav-bg: rgba(245, 247, 245, 0.85);
+  --nav-border: rgba(0, 0, 0, 0.06);
+  --hero-glow-color: rgba(22, 163, 74, 0.07);
+  --preview-gradient: linear-gradient(135deg, #e8f5ec 0%, #f0faf3 50%, #eaf5ee 100%);
+  --preview-glow: radial-gradient(
+    ellipse 60% 50% at 60% 50%,
+    rgba(22, 163, 74, 0.08) 0%,
+    transparent 70%
+  );
+  --surface-grid-gap: rgba(0, 0, 0, 0.05);
+  --game-surface: #edf3ee;
+  --game-surface-strong: #e3ece6;
+  --game-surface-elevated: rgba(255, 255, 255, 0.84);
+  --game-overlay: rgba(245, 247, 245, 0.78);
+  --game-nav-bg: rgba(245, 247, 245, 0.72);
+  --game-foreground: #0e1a11;
+  --game-foreground-soft: rgba(14, 26, 17, 0.78);
+  --game-foreground-muted: rgba(14, 26, 17, 0.58);
+  --game-border: rgba(14, 26, 17, 0.12);
+  --game-border-strong: rgba(14, 26, 17, 0.2);
+  --game-ring-track: rgba(14, 26, 17, 0.14);
+  --game-electric: #166534;
+  --game-win: #15803d;
+  --game-win-deep: #166534;
+  --game-urgent: #dc2626;
+  --game-success-surface: rgba(21, 128, 61, 0.1);
+  --game-success-border: rgba(21, 128, 61, 0.24);
+  --game-danger-surface: rgba(190, 24, 93, 0.09);
+  --game-danger-border: rgba(190, 24, 93, 0.2);
+  --embed-max-content: 72rem;
+  --embed-section-px: clamp(0.875rem, 3.5vw, 1.5rem);
+  --embed-section-py: clamp(3rem, 8vw, 7rem);
+  --embed-touch-target: 44px;
+  --embed-safe-top: env(safe-area-inset-top, 0px);
+  --embed-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist);
+  --font-display: var(--font-playfair);
+}
+
+.dark {
+  --background: #0c1210;
+  --foreground: #e8ede9;
+  --muted: #8a9a8d;
+  --muted-bg: #1a2620;
+  --accent: #4ade80;
+  --accent-light: #14532d;
+  --accent-mid: #22c55e;
+  --card: #141f1a;
+  --border: rgba(255, 255, 255, 0.08);
+  --nav-bg: rgba(12, 18, 16, 0.82);
+  --nav-border: rgba(255, 255, 255, 0.09);
+  --hero-glow-color: rgba(74, 222, 128, 0.12);
+  --preview-gradient: linear-gradient(135deg, #15231d 0%, #1a2c24 50%, #15231d 100%);
+  --preview-glow: radial-gradient(
+    ellipse 60% 50% at 60% 50%,
+    rgba(74, 222, 128, 0.14) 0%,
+    transparent 70%
+  );
+  --surface-grid-gap: rgba(255, 255, 255, 0.08);
+  --game-surface: #0a0a0a;
+  --game-surface-strong: #111714;
+  --game-surface-elevated: rgba(255, 255, 255, 0.06);
+  --game-overlay: rgba(7, 10, 8, 0.78);
+  --game-nav-bg: rgba(0, 0, 0, 0.55);
+  --game-foreground: #f5f5f5;
+  --game-foreground-soft: rgba(255, 255, 255, 0.82);
+  --game-foreground-muted: rgba(255, 255, 255, 0.58);
+  --game-border: rgba(255, 255, 255, 0.12);
+  --game-border-strong: rgba(255, 255, 255, 0.18);
+  --game-ring-track: rgba(255, 255, 255, 0.12);
+  --game-electric: #4ade80;
+  --game-win: #22c55e;
+  --game-win-deep: #166534;
+  --game-urgent: #ef4444;
+  --game-success-surface: rgba(6, 78, 59, 0.4);
+  --game-success-border: rgba(16, 185, 129, 0.22);
+  --game-danger-surface: rgba(136, 19, 55, 0.3);
+  --game-danger-border: rgba(244, 63, 94, 0.2);
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist), system-ui, sans-serif;
+  overflow-x: clip;
+}
+
+.embed-shell {
+  width: min(100%, var(--embed-max-content));
+  margin-inline: auto;
+}
+
+.embed-section {
+  padding-inline: var(--embed-section-px);
+  padding-block: var(--embed-section-py);
+}
+
+.embed-touch-target {
+  min-height: var(--embed-touch-target);
+}
+
+.embed-viewport {
+  min-height: 100dvh;
+}
+
+.hero-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    var(--hero-glow-color) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item[open] .faq-icon {
+  transform: rotate(45deg);
+}
+
+.stat-num {
+  font-family: var(--font-playfair);
+  font-style: italic;
+  font-weight: 700;
+}
+
+/* In-app game flow: dark theme + verde (alineado con /app apuesta) */
+.game-dark {
+  background-color: var(--game-surface);
+  color: var(--game-foreground);
+}
+
+/* Full-bleed game/result screens (above body background) */
+.game-screen-fill {
+  background-color: var(--game-surface);
+  color: var(--game-foreground);
+}
+
+.game-prediction-btn {
+  border: 1px solid var(--game-border-strong);
+  background: var(--game-surface-elevated);
+  color: var(--game-foreground-soft);
+}
+
+.game-prediction-btn[data-active="true"] {
+  border-color: var(--game-electric);
+  background: rgba(74, 222, 128, 0.16);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.4);
+}
+
+.game-cta-primary {
+  background: linear-gradient(180deg, #22c55e 0%, #166534 100%);
+  color: #f0fdf4;
+  box-shadow: 0 8px 28px rgba(22, 163, 74, 0.35);
+}
+
+.game-cta-primary:hover {
+  filter: brightness(1.06);
+}
+
+.game-result-card {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
