@@ -30,6 +30,8 @@ import {
   loadDemoVideoResult,
   type DemoVideoResult,
 } from "./lib/demoResult";
+import { explorerTxUrl } from "./lib/onchain/explorer";
+import type { ChainRoundReceipt } from "./lib/onchain/roundReceipt";
 import {
   calculatePayout,
   calculateTimeoutLossPayout,
@@ -90,9 +92,17 @@ export function GamePlay({ chain }: GamePlayProps) {
   const [videoKey, setVideoKey] = useState(0);
   const [videoMode, setVideoMode] = useState<VideoMode>(CONFIG.ACTIVE_DEMO_SET_ID);
   const [playBusy, setPlayBusy] = useState(false);
+  const [flowError, setFlowError] = useState<string | null>(null);
+  const [settleErrorMessage, setSettleErrorMessage] = useState<string | null>(
+    null
+  );
+  const [chainReceipt, setChainReceipt] = useState<ChainRoundReceipt>({});
 
   const lastPredictionRef = useRef<PredictionChoice | null>(null);
   const ticketIdRef = useRef<bigint | null>(null);
+  const fundIdempotencyRef = useRef<string | null>(null);
+
+  const txExplorerHref = useCallback((hash: string) => explorerTxUrl(hash), []);
   const activeDemoSet = useMemo(
     () => getDemoVideoSet(currentDemoSetId),
     [currentDemoSetId]
@@ -104,6 +114,10 @@ export function GamePlay({ chain }: GamePlayProps) {
 
   const connectedDisplayAddress =
     chain?.getConnectedAddress() ?? DEMO_CONNECTED_WALLET;
+
+  useEffect(() => {
+    fundIdempotencyRef.current = null;
+  }, [selectedWager]);
 
   useEffect(() => {
     const shouldWarn = gameState !== "wager" && gameState !== "result";
@@ -152,20 +166,30 @@ export function GamePlay({ chain }: GamePlayProps) {
     setSettlement(null);
     setVideoError(false);
     setVideoMode(currentDemoSetId);
+    setChainReceipt({});
+    setSettleErrorMessage(null);
   }, [currentDemoSetId]);
 
   const handlePlay = useCallback(async () => {
     if (selectedWager === null) return;
 
     if (chain) {
+      setFlowError(null);
+      if (!chain.getConnectedAddress()) {
+        chain.openAuth();
+        return;
+      }
       setPlayBusy(true);
       try {
-        if (!chain.getConnectedAddress()) {
-          chain.openAuth();
-          return;
+        if (!fundIdempotencyRef.current) {
+          fundIdempotencyRef.current = crypto.randomUUID();
         }
-        await chain.fundForWager(selectedWager);
+        const { txHash } = await chain.fundForWager(selectedWager, {
+          idempotencyKey: fundIdempotencyRef.current,
+        });
+        fundIdempotencyRef.current = null;
         resetRoundState();
+        setChainReceipt({ fundTxHash: txHash });
         const nextDemoSetId = getRandomDemoSetId();
         setCurrentDemoSetId(nextDemoSetId);
         setVideoMode(nextDemoSetId);
@@ -174,7 +198,7 @@ export function GamePlay({ chain }: GamePlayProps) {
       } catch (e) {
         const message =
           e instanceof Error ? e.message : "Could not start the round.";
-        window.alert(message);
+        setFlowError(message);
       } finally {
         setPlayBusy(false);
       }
@@ -222,13 +246,19 @@ export function GamePlay({ chain }: GamePlayProps) {
         if (selectedWager === null) {
           throw new Error("Missing wager.");
         }
-        const ticketId = await chain.lockStake({
+        const lock = await chain.lockStake({
           clipId,
           wagerUsdc: selectedWager,
           direction: choice.direction,
           outcome: choice.outcome,
         });
-        ticketIdRef.current = ticketId;
+        ticketIdRef.current = lock.ticketId;
+        setChainReceipt((prev) => ({
+          ...prev,
+          approveUsdcTxHash: lock.approveTxHash,
+          playTxHash: lock.playTxHash,
+          ticketId: lock.ticketId.toString(),
+        }));
         await new Promise((resolve) => window.setTimeout(resolve, 400));
         return;
       }
@@ -260,8 +290,10 @@ export function GamePlay({ chain }: GamePlayProps) {
     setSettlement(nextSettlement);
 
     if (chain && ticketIdRef.current !== null) {
+      setSettleErrorMessage(null);
       try {
-        await chain.settle(ticketIdRef.current);
+        const { txHash } = await chain.settle(ticketIdRef.current);
+        setChainReceipt((prev) => ({ ...prev, settleTxHash: txHash }));
         const { payout, canClaim } = await chain.readTicketAfterSettle(
           ticketIdRef.current
         );
@@ -270,7 +302,7 @@ export function GamePlay({ chain }: GamePlayProps) {
       } catch (e) {
         const message =
           e instanceof Error ? e.message : "Settlement failed on-chain.";
-        window.alert(message);
+        setSettleErrorMessage(message);
         setDidWin((nextSettlement?.profit ?? 0) > 0);
         setClaimable(false);
       }
@@ -360,6 +392,7 @@ export function GamePlay({ chain }: GamePlayProps) {
   }, [realVideoMode]);
 
   const handlePlayAgainFromResult = useCallback(() => {
+    setFlowError(null);
     setGameState("wager");
     resetRoundState();
   }, [resetRoundState]);
@@ -450,7 +483,7 @@ export function GamePlay({ chain }: GamePlayProps) {
 
   const helperText = useMemo(() => {
     if (chain) {
-      return "On-chain mode: Arc Testnet USDC, Dynamic wallet, and contract escrow.";
+      return appCopy.wager.onChainHint;
     }
     return "Demo mode: each round uses one of the bundled Messi clips and simulates the wallet confirmation locally.";
   }, [chain]);
@@ -499,6 +532,9 @@ export function GamePlay({ chain }: GamePlayProps) {
           actualOutcome={actualResult.outcome}
           settlement={settlement}
           simulateVideo={usesSimulatedVideo}
+          chainActivity={chain ? chainReceipt : null}
+          settleErrorMessage={chain ? settleErrorMessage : null}
+          txExplorerHref={chain ? txExplorerHref : undefined}
         />
         {showGameDevHud && (
           <GameDevHud
@@ -520,6 +556,16 @@ export function GamePlay({ chain }: GamePlayProps) {
         <WagerScreen
           helperText={helperText}
           isBusy={playBusy}
+          busyLabel={
+            chain ? appCopy.wager.funding : appCopy.wager.preparing
+          }
+          playLabel={
+            chain ? appCopy.wager.playOnChain : appCopy.wager.playDemo
+          }
+          flowError={chain ? flowError : null}
+          onDismissFlowError={
+            chain ? () => setFlowError(null) : undefined
+          }
           selectedWager={selectedWager}
           wagerOptions={wagerOptions}
           playEnabled={playEnabled}
@@ -588,6 +634,9 @@ export function GamePlay({ chain }: GamePlayProps) {
                   onConfirmed={handlePredictionConfirmed}
                   onLockPrediction={handleLockPrediction}
                   onTimeout={handlePredictionTimeout}
+                  walletWaitingText={
+                    chain ? appCopy.walletModal.waitingOnChain : undefined
+                  }
                 />
               )}
             </div>

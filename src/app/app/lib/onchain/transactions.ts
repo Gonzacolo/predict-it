@@ -28,7 +28,11 @@ export async function approveAndPlay(params: {
   amount: bigint;
   direction: number;
   outcome: number;
-}): Promise<{ ticketId: bigint; playTxHash: Hash }> {
+}): Promise<{
+  ticketId: bigint;
+  approveTxHash: Hash;
+  playTxHash: Hash;
+}> {
   const { walletClient, publicClient, usdc, escrow } = params;
   const account = walletClient.account;
   if (!account) {
@@ -79,7 +83,7 @@ export async function approveAndPlay(params: {
     throw new Error("TicketCreated event not found.");
   }
 
-  return { ticketId, playTxHash: playHash };
+  return { ticketId, approveTxHash: approveHash, playTxHash: playHash };
 }
 
 export async function claimToTicket(params: {

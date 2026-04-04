@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { appCopy } from "../copy";
 import { type Direction, type Outcome } from "../config";
+import { explorerTxUrl } from "../lib/onchain/explorer";
+import type { ChainRoundReceipt } from "../lib/onchain/roundReceipt";
 import type { PayoutBreakdown } from "../lib/payout";
 import {
   getDefaultAppShareUrl,
@@ -34,6 +36,9 @@ type ResultScreenProps = {
   actualOutcome: Outcome;
   settlement: PayoutBreakdown | null;
   simulateVideo: boolean;
+  chainActivity?: ChainRoundReceipt | null;
+  settleErrorMessage?: string | null;
+  txExplorerHref?: (txHash: string) => string;
 };
 
 function labelDirection(d: Direction) {
@@ -65,8 +70,20 @@ export function ResultScreen({
   actualOutcome,
   settlement,
   simulateVideo,
+  chainActivity,
+  settleErrorMessage,
+  txExplorerHref,
 }: ResultScreenProps) {
   const reduceMotion = usePrefersReducedMotion();
+  const explorer = txExplorerHref ?? explorerTxUrl;
+  const showChainBlock =
+    chainActivity != null &&
+    (chainActivity.ticketId != null ||
+      chainActivity.fundTxHash != null ||
+      chainActivity.approveUsdcTxHash != null ||
+      chainActivity.playTxHash != null ||
+      chainActivity.settleTxHash != null ||
+      chainActivity.claimTxHash != null);
   const canClaim = claimable ?? (settlement?.payoutTotal ?? 0) > 0;
   const payoutTotal = settlement?.payoutTotal ?? 0;
   const profit = settlement?.profit ?? 0;
@@ -146,6 +163,7 @@ export function ResultScreen({
             }
           >
           <GameResultNav />
+          <SettleErrorBanner message={settleErrorMessage} />
           <div className="mb-6 w-full">
             <div className="relative mx-auto aspect-video w-full max-w-xl overflow-hidden rounded-2xl bg-[var(--game-surface-strong)] ring-1 ring-[var(--game-border)]">
               <ResultLoopVideo
@@ -159,6 +177,9 @@ export function ResultScreen({
             <p className="mb-2 text-sm text-[var(--game-foreground-muted)]">
               {appCopy.result.playedWith(wagerUsdc)}
             </p>
+          )}
+          {showChainBlock && chainActivity != null && (
+            <ChainRoundPanel receipt={chainActivity} explorerHref={explorer} />
           )}
           <p className="mb-2 font-[family-name:var(--font-bebas)] text-sm uppercase tracking-[0.4em] text-[var(--game-electric)]">
             {appCopy.result.winLabel}
@@ -249,6 +270,7 @@ export function ResultScreen({
       <div className={resultScrollBodyClass}>
         <div className="mx-auto flex w-full max-w-lg flex-col items-center text-center">
         <GameResultNav />
+        <SettleErrorBanner message={settleErrorMessage} />
         <div className="mb-6 w-full">
           <div className="relative mx-auto aspect-video w-full max-w-xl overflow-hidden rounded-2xl bg-[var(--game-surface-strong)] ring-1 ring-[var(--game-border)]">
             <ResultLoopVideo
@@ -262,6 +284,9 @@ export function ResultScreen({
           <p className="mb-2 text-sm text-[var(--game-foreground-muted)]">
             {appCopy.result.playedWith(wagerUsdc)}
           </p>
+        )}
+        {showChainBlock && chainActivity != null && (
+          <ChainRoundPanel receipt={chainActivity} explorerHref={explorer} />
         )}
         <p className="mb-2 font-[family-name:var(--font-bebas)] text-sm uppercase tracking-[0.4em] text-[var(--game-foreground-muted)]">
           {appCopy.result.loseLabel}
@@ -323,6 +348,83 @@ export function ResultScreen({
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function SettleErrorBanner({ message }: { message?: string | null }) {
+  if (message == null || message === "") return null;
+  return (
+    <div className="mb-6 w-full max-w-xl rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-left text-sm text-[var(--game-foreground)]">
+      <p className="font-semibold text-amber-200">{appCopy.flowError.settleTitle}</p>
+      <p className="mt-1 text-[var(--game-foreground-soft)]">{message}</p>
+      <p className="mt-2 text-xs text-[var(--game-foreground-muted)]">
+        {appCopy.flowError.settleBody}
+      </p>
+    </div>
+  );
+}
+
+function ChainRoundPanel({
+  receipt,
+  explorerHref,
+}: {
+  receipt: ChainRoundReceipt;
+  explorerHref: (txHash: string) => string;
+}) {
+  const rows: { label: string; hash: string }[] = [];
+  if (receipt.fundTxHash) {
+    rows.push({ label: appCopy.chainActivity.fund, hash: receipt.fundTxHash });
+  }
+  if (receipt.approveUsdcTxHash) {
+    rows.push({
+      label: appCopy.chainActivity.approve,
+      hash: receipt.approveUsdcTxHash,
+    });
+  }
+  if (receipt.playTxHash) {
+    rows.push({ label: appCopy.chainActivity.play, hash: receipt.playTxHash });
+  }
+  if (receipt.settleTxHash) {
+    rows.push({
+      label: appCopy.chainActivity.settle,
+      hash: receipt.settleTxHash,
+    });
+  }
+  if (receipt.claimTxHash) {
+    rows.push({
+      label: appCopy.chainActivity.claim,
+      hash: receipt.claimTxHash,
+    });
+  }
+
+  return (
+    <div className="mb-6 w-full max-w-xl rounded-2xl border border-[var(--game-border)] bg-[var(--game-surface-elevated)] p-4 text-left">
+      <p className="mb-3 text-xs uppercase tracking-widest text-[var(--game-electric)]">
+        {appCopy.chainActivity.title}
+      </p>
+      {receipt.ticketId != null && (
+        <p className="mb-3 font-mono text-xs text-[var(--game-foreground-muted)]">
+          {appCopy.chainActivity.ticketId}: {receipt.ticketId}
+        </p>
+      )}
+      <ul className="flex flex-col gap-2">
+        {rows.map((row) => (
+          <li key={row.label} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <span className="text-xs text-[var(--game-foreground-muted)]">
+              {row.label}
+            </span>
+            <a
+              href={explorerHref(row.hash)}
+              target="_blank"
+              rel="noreferrer"
+              className="break-all text-xs font-medium text-[var(--game-electric)] underline-offset-2 hover:underline"
+            >
+              {appCopy.chainActivity.viewTx}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

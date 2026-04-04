@@ -37,27 +37,38 @@ export function AppOnchainGameFlow() {
       openAuth: () => {
         setShowAuthFlow(true);
       },
-      fundForWager: async (wagerUsdc: number) => {
+      fundForWager: async (wagerUsdc, opts) => {
         const addr = primaryWallet?.address;
         if (!addr) {
           throw new Error("Connect a wallet first.");
         }
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (opts?.idempotencyKey) {
+          headers["Idempotency-Key"] = opts.idempotencyKey;
+        }
         const res = await fetch("/api/game/fund", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             playerWalletAddress: addr,
             desiredWagerUsdc: wagerUsdc,
           }),
         });
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          txHash?: string;
+        };
         if (!res.ok) {
-          const err = (await res.json().catch(() => ({}))) as {
-            error?: string;
-          };
           throw new Error(
-            typeof err.error === "string" ? err.error : "Funding failed."
+            typeof data.error === "string" ? data.error : "Funding failed."
           );
         }
+        if (typeof data.txHash !== "string" || !data.txHash.startsWith("0x")) {
+          throw new Error("Funding response missing transaction hash.");
+        }
+        return { txHash: data.txHash as `0x${string}` };
       },
       lockStake: async ({
         clipId,
@@ -73,7 +84,7 @@ export function AppOnchainGameFlow() {
         if (!walletClient) {
           throw new Error("Wallet client unavailable.");
         }
-        const { ticketId } = await approveAndPlay({
+        return approveAndPlay({
           walletClient,
           publicClient,
           usdc,
@@ -83,7 +94,6 @@ export function AppOnchainGameFlow() {
           direction: directionToUint8(direction),
           outcome: outcomeToUint8(outcome),
         });
-        return ticketId;
       },
       settle: async (ticketId: bigint) => {
         const res = await fetch("/api/game/settle", {
@@ -91,14 +101,19 @@ export function AppOnchainGameFlow() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ticketId: ticketId.toString() }),
         });
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          txHash?: string;
+        };
         if (!res.ok) {
-          const err = (await res.json().catch(() => ({}))) as {
-            error?: string;
-          };
           throw new Error(
-            typeof err.error === "string" ? err.error : "Settle failed."
+            typeof data.error === "string" ? data.error : "Settle failed."
           );
         }
+        if (typeof data.txHash !== "string" || !data.txHash.startsWith("0x")) {
+          throw new Error("Settle response missing transaction hash.");
+        }
+        return { txHash: data.txHash as `0x${string}` };
       },
       claim: async (ticketId, recipient) => {
         if (!primaryWallet || !isEthereumWallet(primaryWallet)) {
@@ -109,13 +124,14 @@ export function AppOnchainGameFlow() {
         if (!walletClient) {
           throw new Error("Wallet client unavailable.");
         }
-        await claimToTicket({
+        const txHash = await claimToTicket({
           walletClient,
           publicClient,
           escrow,
           ticketId,
           recipient,
         });
+        return { txHash };
       },
       readTicketAfterSettle: async (ticketId: bigint) => {
         const ticket = (await publicClient.readContract({
