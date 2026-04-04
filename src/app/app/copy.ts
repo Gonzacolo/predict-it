@@ -9,6 +9,14 @@ export const appCopy = {
     wager: (usdc: number) => `Wager: ${usdc} USDC`,
     wagerPending: "Choose your wager",
   },
+  wager: {
+    funding: "Sending testnet USDC…",
+    preparing: "Preparing…",
+    playDemo: "Play demo round",
+    playOnChain: "Play with testnet USDC",
+    onChainHint:
+      "Arc Testnet only: USDC here is test tokens with no real value. Stakes and claims are on-chain via the escrow contract.",
+  },
   video: {
     tapToStart: "Tap to start",
     loading: "Loading video...",
@@ -35,8 +43,9 @@ export const appCopy = {
   },
   walletModal: {
     title: "Lock prediction",
-    waiting: "Simulating wallet confirmation...",
-    success: "Prediction Recorded On-Chain",
+    waiting: "Simulating wallet confirmation…",
+    waitingOnChain: "Approve USDC and confirm play in your wallet…",
+    success: "Prediction recorded on-chain",
     continue: "Continue",
   },
   claimModal: {
@@ -51,6 +60,23 @@ export const appCopy = {
     recipientInputPlaceholder: "0x...",
     close: "Close",
     submit: "Preview claim destination",
+  },
+  flowError: {
+    dismiss: "Dismiss",
+    playTitle: "Could not start the round",
+    settleTitle: "Settlement did not complete on-chain",
+    settleBody:
+      "The video result below is for display only. Rewards and claim may not match the contract until settlement succeeds.",
+  },
+  chainActivity: {
+    title: "On-chain activity",
+    fund: "Faucet (USDC transfer)",
+    approve: "Approve USDC",
+    play: "Lock stake (play)",
+    settle: "Settle ticket",
+    claim: "Claim payout",
+    ticketId: "Ticket ID",
+    viewTx: "View transaction",
   },
   result: {
     winLabel: "Payout",

@@ -18,6 +18,7 @@ type PredictionPanelProps = {
   onTimeout: () => void;
   totalSeconds: number;
   wagerUsdc: number | null;
+  walletWaitingText?: string;
 };
 
 const rowVariants = {
@@ -43,6 +44,7 @@ export function PredictionPanel({
   onTimeout,
   totalSeconds,
   wagerUsdc,
+  walletWaitingText,
 }: PredictionPanelProps) {
   const reduceMotion = usePrefersReducedMotion();
 
@@ -197,7 +199,7 @@ export function PredictionPanel({
         errorText={walletError}
         phase={walletPhase}
         title={appCopy.walletModal.title}
-        waitingText={appCopy.walletModal.waiting}
+        waitingText={walletWaitingText ?? appCopy.walletModal.waiting}
         successText={appCopy.walletModal.success}
         continueLabel={appCopy.walletModal.continue}
         onContinue={handleWalletContinue}

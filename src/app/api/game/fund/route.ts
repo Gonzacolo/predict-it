@@ -4,6 +4,14 @@ import { NextResponse } from "next/server";
 
 import { assertGameOnchainConfig } from "@/lib/gameChain";
 import { dynamicRestConfigOrNull } from "@/lib/dynamicSdk";
+import {
+  checkFundRateLimits,
+  fundIdempotencyKey,
+  getCachedFundResponse,
+  matchesIdemEntry,
+  rememberFundSuccess,
+} from "@/lib/server/fundGuards";
+import { clientIpFromRequest, gameApiLog } from "@/lib/server/gameApiLog";
 import { createOperatorWalletClient } from "@/lib/server/gameWallets";
 
 type FundBody = {
@@ -38,6 +46,55 @@ export async function POST(request: Request) {
     );
   }
 
+  const playerLower = player.toLowerCase();
+  const idemHeader = request.headers.get("idempotency-key");
+  const idemKey = fundIdempotencyKey(idemHeader, playerLower, wager);
+  const cached = getCachedFundResponse(idemKey);
+  if (cached) {
+    if (!matchesIdemEntry(cached, playerLower, wager)) {
+      gameApiLog({
+        route: "fund",
+        event: "idempotency_conflict",
+        idemKeyPrefix: idemKey.slice(0, 12),
+      });
+      return NextResponse.json(
+        { error: "Idempotency-Key reused with different body." },
+        { status: 409 }
+      );
+    }
+    gameApiLog({
+      route: "fund",
+      event: "idempotent_replay",
+      player: playerLower,
+      wager,
+    });
+    return NextResponse.json({
+      ok: true,
+      txHash: cached.txHash,
+      fundedAmount: cached.fundedAmount,
+      replayed: true,
+    });
+  }
+
+  const ip = clientIpFromRequest(request);
+  const limit = checkFundRateLimits(ip, playerLower);
+  if (!limit.ok) {
+    gameApiLog({
+      route: "fund",
+      event: "rate_limited",
+      ip,
+      player: playerLower,
+      retryAfterSec: limit.retryAfterSec,
+    });
+    return NextResponse.json(
+      { error: "Too many funding requests. Try again shortly." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSec) },
+      }
+    );
+  }
+
   try {
     const { usdc } = assertGameOnchainConfig();
     const wallet = createOperatorWalletClient();
@@ -53,6 +110,23 @@ export async function POST(request: Request) {
       args: [player, fundedAmount],
     });
 
+    rememberFundSuccess(
+      idemKey,
+      hash,
+      fundedAmount.toString(),
+      playerLower,
+      wager
+    );
+
+    gameApiLog({
+      route: "fund",
+      event: "success",
+      ip,
+      player: playerLower,
+      wager,
+      txHash: hash,
+    });
+
     return NextResponse.json({
       ok: true,
       txHash: hash,
@@ -60,6 +134,14 @@ export async function POST(request: Request) {
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Funding failed.";
+    gameApiLog({
+      route: "fund",
+      event: "error",
+      ip,
+      player: playerLower,
+      wager,
+      message,
+    });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

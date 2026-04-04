@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { assertGameOnchainConfig } from "@/lib/gameChain";
 import { gameEscrowAbi } from "@/lib/contracts/gameEscrowAbi";
+import { clientIpFromRequest, gameApiLog } from "@/lib/server/gameApiLog";
 import { createEscrowOwnerWalletClient } from "@/lib/server/gameWallets";
 
 type SettleBody = {
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
   }
 
   const ticketId = BigInt(raw);
+  const ip = clientIpFromRequest(request);
 
   try {
     const { chain, escrow } = assertGameOnchainConfig();
@@ -44,9 +46,24 @@ export async function POST(request: Request) {
 
     await publicClient.waitForTransactionReceipt({ hash });
 
+    gameApiLog({
+      route: "settle",
+      event: "success",
+      ip,
+      ticketId: raw,
+      txHash: hash,
+    });
+
     return NextResponse.json({ ok: true, txHash: hash });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Settle failed.";
+    gameApiLog({
+      route: "settle",
+      event: "error",
+      ip,
+      ticketId: raw,
+      message,
+    });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

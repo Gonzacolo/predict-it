@@ -50,6 +50,10 @@ export default function Home() {
       q: "Do I need KYC or signup?",
       a: "Not currently. A wallet connection gates escrow flows.",
     },
+    {
+      q: "Is this real money?",
+      a: "The public demo targets Arc Testnet: USDC and payouts are test tokens with no real-world value. There is no promise of financial return.",
+    },
   ];
 
   return (

@@ -2,10 +2,15 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 
+import { appCopy } from "../copy";
+
 type WagerScreenProps = {
   helperText?: string | null;
   isBusy?: boolean;
+  busyLabel?: string;
   playLabel?: string;
+  flowError?: string | null;
+  onDismissFlowError?: () => void;
   selectedWager: number | null;
   wagerOptions: readonly number[];
   playEnabled: boolean;
@@ -16,7 +21,10 @@ type WagerScreenProps = {
 export function WagerScreen({
   helperText,
   isBusy = false,
+  busyLabel = appCopy.wager.preparing,
   playLabel = "Play with Testnet USDC",
+  flowError,
+  onDismissFlowError,
   selectedWager,
   wagerOptions,
   playEnabled,
@@ -35,6 +43,23 @@ export function WagerScreen({
       >
         <section className="relative mx-auto flex min-h-[min(78dvh,720px)] w-full max-w-4xl flex-col items-center justify-center px-4 py-10 text-center sm:py-16">
           <div className="hero-glow" />
+          {flowError != null && flowError !== "" && (
+            <div
+              className="relative z-10 mb-6 w-full max-w-xl rounded-xl border border-red-500/35 bg-red-500/10 px-4 py-3 text-left text-sm text-[var(--foreground)]"
+              role="alert"
+            >
+              <p className="pr-8">{flowError}</p>
+              {onDismissFlowError != null && (
+                <button
+                  type="button"
+                  onClick={onDismissFlowError}
+                  className="mt-2 text-xs font-semibold uppercase tracking-widest text-[var(--accent)] underline-offset-2 hover:underline"
+                >
+                  {appCopy.flowError.dismiss}
+                </button>
+              )}
+            </div>
+          )}
           <p className="relative z-10 mb-4 text-xs uppercase tracking-[0.3em] text-[var(--accent-mid)]">
             Predict It!
           </p>
@@ -92,7 +117,7 @@ export function WagerScreen({
                 : "none",
             }}
           >
-            {isBusy ? "Preparing..." : playLabel}
+            {isBusy ? busyLabel : playLabel}
           </button>
 
           <p className="relative z-10 mt-5 max-w-2xl text-xs leading-relaxed text-[var(--muted-foreground)] sm:text-sm">
