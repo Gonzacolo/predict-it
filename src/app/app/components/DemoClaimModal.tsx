@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef } from "react";
+
+import { getPlayAgainHref } from "../lib/playAgainHref";
 
 type DemoClaimModalProps = {
   waitingTxLabel?: string;
@@ -57,6 +58,8 @@ export function DemoClaimModal({
   const submitRef = useRef<HTMLButtonElement>(null);
   const playAgainRef = useRef<HTMLAnchorElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const playAgainHref = getPlayAgainHref();
+  const playAgainIsExternal = /^https?:\/\//i.test(playAgainHref);
 
   useEffect(() => {
     if (!open) return;
@@ -184,14 +187,15 @@ export function DemoClaimModal({
             </div>
           </>
         ) : phase === "success" ? (
-          <Link
+          <a
             ref={playAgainRef}
-            href="/app"
+            href={playAgainHref}
             onClick={() => onClose()}
+            rel={playAgainIsExternal ? "noreferrer" : undefined}
             className="game-cta-primary embed-touch-target mt-6 flex w-full items-center justify-center rounded-xl text-sm font-semibold uppercase tracking-widest"
           >
             {playAgainLabel}
-          </Link>
+          </a>
         ) : (
           <button
             type="button"
