@@ -157,8 +157,7 @@ export function ResultScreen({
           title={appCopy.claimModal.title}
           body={appCopy.claimModal.body}
         />
-        {!reduceMotion && won ? <ConfettiBurst /> : null}
-        {!reduceMotion && !won ? <SadEmojiBurst /> : null}
+        {!reduceMotion ? <ConfettiBurst /> : null}
         <div className={resultScrollBodyClass}>
           <motion.div
             className="mx-auto flex w-full max-w-lg flex-col items-center text-center"
@@ -276,6 +275,7 @@ export function ResultScreen({
         title={appCopy.claimModal.title}
         body={appCopy.claimModal.body}
       />
+      {!reduceMotion ? <SadEmojiBurst /> : null}
       <div className={resultScrollBodyClass}>
         <div className="mx-auto flex w-full max-w-lg flex-col items-center text-center">
         <GameResultNav />
