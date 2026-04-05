@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 type DemoClaimModalProps = {
-  closeLabel: string;
+  waitingTxLabel?: string;
   connectedWalletAddress: string;
   connectedWalletHint: string;
   connectedWalletTitle: string;
@@ -14,6 +15,7 @@ type DemoClaimModalProps = {
   onSubmit: () => void;
   open: boolean;
   phase: "editing" | "error" | "submitting" | "success";
+  playAgainLabel: string;
   recipientInputLabel: string;
   recipientInputPlaceholder: string;
   recipientMode: "connected" | "recipient";
@@ -28,7 +30,7 @@ type DemoClaimModalProps = {
 };
 
 export function DemoClaimModal({
-  closeLabel,
+  waitingTxLabel = "Waiting for confirmation…",
   connectedWalletAddress,
   connectedWalletHint,
   connectedWalletTitle,
@@ -39,6 +41,7 @@ export function DemoClaimModal({
   onSubmit,
   open,
   phase,
+  playAgainLabel,
   recipientInputLabel,
   recipientInputPlaceholder,
   recipientMode,
@@ -51,15 +54,20 @@ export function DemoClaimModal({
   body,
   onClose,
 }: DemoClaimModalProps) {
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const submitRef = useRef<HTMLButtonElement>(null);
+  const playAgainRef = useRef<HTMLAnchorElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
+    if (phase === "success") {
+      playAgainRef.current?.focus();
+      return;
+    }
     if ((phase === "editing" || phase === "error") && recipientMode === "recipient") {
       inputRef.current?.focus();
     } else {
-      closeRef.current?.focus();
+      submitRef.current?.focus();
     }
   }, [open, phase, recipientMode]);
 
@@ -164,32 +172,33 @@ export function DemoClaimModal({
             {errorMessage ? (
               <p className="mt-3 text-sm text-rose-400">{errorMessage}</p>
             ) : null}
-            <div className="mt-6 flex flex-col gap-3">
+            <div className="mt-6">
               <button
+                ref={submitRef}
                 type="button"
                 onClick={onSubmit}
                 className="game-cta-primary embed-touch-target w-full rounded-xl text-sm font-semibold uppercase tracking-widest"
               >
                 {submitLabel}
               </button>
-              <button
-                ref={closeRef}
-                type="button"
-                onClick={onClose}
-                className="embed-touch-target w-full rounded-xl border border-[var(--game-border)] px-4 py-3 text-sm font-semibold uppercase tracking-widest text-[var(--game-foreground)]"
-              >
-                {closeLabel}
-              </button>
             </div>
           </>
+        ) : phase === "success" ? (
+          <Link
+            ref={playAgainRef}
+            href="/app"
+            onClick={() => onClose()}
+            className="game-cta-primary embed-touch-target mt-6 flex w-full items-center justify-center rounded-xl text-sm font-semibold uppercase tracking-widest"
+          >
+            {playAgainLabel}
+          </Link>
         ) : (
           <button
-            ref={closeRef}
             type="button"
-            onClick={onClose}
-            className="game-cta-primary embed-touch-target mt-6 w-full rounded-xl text-sm font-semibold uppercase tracking-widest"
+            disabled
+            className="game-cta-primary embed-touch-target mt-6 w-full cursor-wait rounded-xl text-sm font-semibold uppercase tracking-widest opacity-80"
           >
-            {phase === "submitting" ? "Waiting for confirmation..." : closeLabel}
+            {waitingTxLabel}
           </button>
         )}
       </div>

@@ -481,13 +481,6 @@ export function GamePlay({ chain }: GamePlayProps) {
     [gameState, realVideoMode]
   );
 
-  const helperText = useMemo(() => {
-    if (chain) {
-      return appCopy.wager.onChainHint;
-    }
-    return "Demo mode: each round uses one of the bundled Messi clips and simulates the wallet confirmation locally.";
-  }, [chain]);
-
   const showVideoPhase =
     gameState === "video_playing" ||
     gameState === "prediction" ||
@@ -554,7 +547,9 @@ export function GamePlay({ chain }: GamePlayProps) {
     <>
       {gameState === "wager" && (
         <WagerScreen
-          helperText={helperText}
+          helperText={chain ? appCopy.wager.onChainHint : null}
+          predictionSeconds={CONFIG.PREDICTION_TOTAL_SECONDS}
+          showMarketOdds={!!chain}
           isBusy={playBusy}
           busyLabel={
             chain ? appCopy.wager.funding : appCopy.wager.preparing
