@@ -129,9 +129,9 @@ export const CONFIG = {
   ACTIVE_DEMO_VIDEO_SET,
   LANDING_EXPLAINER_VIDEO_SRC,
   LANDING_EXPLAINER_POSTER,
-  /** Tiempo aproximado (segundos) para la intro simulada si faltan assets. */
+  /** Approximate duration (seconds) of the simulated intro when assets are missing. */
   SIMULATED_INTRO_SECONDS: 4.5,
-  /** Tiempo total (segundos) para completar los 3 pasos de predicción */
+  /** Total time (seconds) to complete the 3 prediction steps. */
   PREDICTION_TOTAL_SECONDS: 15,
   WINNINGS_AMOUNT: 10,
 } as const;

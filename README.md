@@ -23,6 +23,15 @@ Copy `.env.example` to `.env.local` and adjust as needed.
 | `NEXT_PUBLIC_GAME_DEV_HUD` | Shows the dev HUD in production only when set to `true`. In development it is shown unless set to `false`. |
 | `NEXT_PUBLIC_ENABLE_LEADERBOARD` | Enables the leaderboard in production only when set to `true`. In development it is shown unless set to `false`. |
 
+## Documentation
+
+- **On-chain PRD**: `docs/onchain-smart-contracts-backend-prd.md`
+- **Operational setup**: `docs/operational-setup-guide.md`
+- **Manual deploy (Foundry, Arc Testnet)**: `docs/deploy-gameescrow-arc-step-by-step.md`
+- **E2E testnet production checklist**: `docs/e2e-checklist-production-testnet.md`
+- **Next steps / roadmap**: `docs/next-steps.md`
+- **Product feedback notes**: `docs/product-feedback-notes.md`
+
 ## Demo assets
 
 This public repo includes six local Messi demo sets.
