@@ -64,9 +64,8 @@ export function PredictionPanel({
 
   const [walletOpen, setWalletOpen] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
-  const [walletPhase, setWalletPhase] = useState<"error" | "waiting" | "success">(
-    "waiting"
-  );
+  const [lockInFlight, setLockInFlight] = useState(false);
+  const lockRunRef = useRef(false);
   const pendingChoiceRef = useRef<{
     direction: Direction;
     outcome: Outcome;
@@ -88,7 +87,7 @@ export function PredictionPanel({
   }, [onTimeout]);
 
   const triggerWalletConfirmation = useCallback(async () => {
-    if (firedRef.current || walletOpen) return;
+    if (firedRef.current || lockRunRef.current) return;
     const d = directionRef.current;
     const o = outcomeRef.current;
 
@@ -97,23 +96,36 @@ export function PredictionPanel({
       return;
     }
 
+    lockRunRef.current = true;
     pendingChoiceRef.current = { direction: d, outcome: o };
     setWalletError(null);
-    setWalletPhase("waiting");
-    setWalletOpen(true);
+    setLockInFlight(true);
 
     try {
       await onLockPrediction({ direction: d, outcome: o });
-      setWalletPhase("success");
+      const c = pendingChoiceRef.current;
+      pendingChoiceRef.current = null;
+      if (!c) {
+        lockRunRef.current = false;
+        setLockInFlight(false);
+        finishAsTimeout();
+        return;
+      }
+      firedRef.current = true;
+      lockRunRef.current = false;
+      setLockInFlight(false);
+      onConfirmed(c);
     } catch (error) {
+      lockRunRef.current = false;
+      setLockInFlight(false);
       const message =
         error instanceof Error
           ? error.message
           : "The transaction could not be confirmed.";
       setWalletError(message);
-      setWalletPhase("error");
+      setWalletOpen(true);
     }
-  }, [finishAsTimeout, onLockPrediction, walletOpen]);
+  }, [finishAsTimeout, onLockPrediction, onConfirmed]);
 
   useEffect(() => {
     if (firedRef.current) return;
@@ -172,46 +184,39 @@ export function PredictionPanel({
     setUiStep(3);
   };
 
-  const handleWalletContinue = () => {
-    if (walletPhase !== "success") {
-      finishAsTimeout();
-      return;
-    }
-
-    const c = pendingChoiceRef.current;
-    pendingChoiceRef.current = null;
-    if (!c) {
-      finishAsTimeout();
-      return;
-    }
-    if (firedRef.current) return;
-    firedRef.current = true;
+  const handleWalletErrorDismiss = () => {
     setWalletOpen(false);
-    onConfirmed(c);
+    finishAsTimeout();
   };
 
-  const showTimer = !walletOpen;
+  const showTimer = !walletOpen && !lockInFlight;
+  const inlineLockMessage =
+    walletWaitingText ?? appCopy.walletModal.waiting;
 
   return (
     <>
       <DemoWalletModal
         open={walletOpen}
         errorText={walletError}
-        phase={walletPhase}
+        phase="error"
         title={appCopy.walletModal.title}
         waitingText={walletWaitingText ?? appCopy.walletModal.waiting}
         successText={appCopy.walletModal.success}
         continueLabel={appCopy.walletModal.continue}
-        onContinue={handleWalletContinue}
+        onContinue={handleWalletErrorDismiss}
       />
 
       {showTimer && (
         <motion.div
-          className="pointer-events-none absolute right-3 top-3 z-30 flex items-center gap-3 sm:right-5 sm:top-5 sm:gap-4"
+          className="pointer-events-none absolute right-3 top-3 z-30 sm:right-5 sm:top-5"
           initial={reduceMotion ? false : { opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={reduceMotion ? { duration: 0 } : { delay: 0.15, duration: 0.3 }}
         >
+          <div
+            className="flex items-center gap-2 rounded-full border border-white/25 bg-white/40 px-3 py-2 shadow-lg backdrop-blur-md dark:border-white/15 dark:bg-black/40 sm:gap-3 sm:px-4 sm:py-2.5"
+            aria-hidden
+          >
           <svg
             width="132"
             height="132"
@@ -248,6 +253,7 @@ export function PredictionPanel({
           >
             00:{secondsLeft.toString().padStart(2, "0")}
           </span>
+          </div>
         </motion.div>
       )}
 
@@ -379,13 +385,27 @@ export function PredictionPanel({
                       ? `${direction === "left" ? appCopy.prediction.left : appCopy.prediction.right} · ${outcome === "goal" ? appCopy.prediction.goal : appCopy.prediction.miss}`
                       : "—"}
                   </p>
-                  <p className="mt-4 text-sm leading-relaxed text-[var(--game-foreground-muted)]">
-                    {appCopy.prediction.confirmHint}
-                  </p>
+                  {lockInFlight ? (
+                    <div className="mt-5 flex flex-col items-center gap-3">
+                      <div
+                        className="h-9 w-9 animate-spin rounded-full border-2 border-[var(--game-border)] border-t-[var(--game-electric)]"
+                        aria-hidden
+                      />
+                      <p className="text-sm leading-relaxed text-[var(--game-foreground-muted)]">
+                        {inlineLockMessage}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-relaxed text-[var(--game-foreground-muted)]">
+                      {appCopy.prediction.confirmHint}
+                    </p>
+                  )}
                 </div>
-                <p className="text-center text-sm font-medium text-[var(--game-electric)]">
-                  {appCopy.prediction.confirmCta}
-                </p>
+                {!lockInFlight ? (
+                  <p className="text-center text-sm font-medium text-[var(--game-electric)]">
+                    {appCopy.prediction.confirmCta}
+                  </p>
+                ) : null}
               </motion.div>
             )}
           </AnimatePresence>

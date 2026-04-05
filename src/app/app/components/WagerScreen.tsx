@@ -6,6 +6,10 @@ import { appCopy } from "../copy";
 
 type WagerScreenProps = {
   helperText?: string | null;
+  /** Seconds for prediction window (from CONFIG). */
+  predictionSeconds: number;
+  /** Show prediction-market odds copy (on-chain rounds). */
+  showMarketOdds?: boolean;
   isBusy?: boolean;
   busyLabel?: string;
   playLabel?: string;
@@ -20,6 +24,8 @@ type WagerScreenProps = {
 
 export function WagerScreen({
   helperText,
+  predictionSeconds,
+  showMarketOdds = false,
   isBusy = false,
   busyLabel = appCopy.wager.preparing,
   playLabel = "Play with Testnet USDC",
@@ -120,10 +126,20 @@ export function WagerScreen({
             {isBusy ? busyLabel : playLabel}
           </button>
 
-          <p className="relative z-10 mt-5 max-w-2xl text-xs leading-relaxed text-[var(--muted-foreground)] sm:text-sm">
-            {helperText ??
-              "Disclaimer: If you do not select the shot direction or fail to submit in time due to connection issues, you may lose the invested amount."}
-          </p>
+          <div className="relative z-10 mt-5 max-w-2xl space-y-3 text-xs leading-relaxed text-[var(--muted-foreground)] sm:text-sm">
+            <p>{appCopy.wager.howRoundWorks(predictionSeconds)}</p>
+            {showMarketOdds ? (
+              <p>{appCopy.wager.marketOddsNote}</p>
+            ) : (
+              <p>{appCopy.wager.demoModeNote}</p>
+            )}
+            {helperText != null && helperText !== "" ? (
+              <p className="text-[var(--foreground)]/90">{helperText}</p>
+            ) : null}
+            <p className="text-[var(--muted-foreground)]">
+              {appCopy.wager.disclaimer}
+            </p>
+          </div>
         </section>
       </motion.main>
     </AnimatePresence>

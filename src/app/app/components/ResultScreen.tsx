@@ -8,6 +8,7 @@ import { type Direction, type Outcome } from "../config";
 import { explorerTxUrl } from "../lib/onchain/explorer";
 import type { ChainRoundReceipt } from "../lib/onchain/roundReceipt";
 import type { PayoutBreakdown } from "../lib/payout";
+import { playResultStinger } from "../lib/resultStinger";
 import {
   getDefaultAppShareUrl,
   openPredictItTweetIntent,
@@ -94,6 +95,11 @@ export function ResultScreen({
     onClaimModalClose?.();
   }, [onClaimModalClose]);
 
+  useEffect(() => {
+    if (reduceMotion) return;
+    playResultStinger(won);
+  }, [won, reduceMotion]);
+
   const handleShare = useCallback(() => {
     openPredictItTweetIntent({
       won,
@@ -128,7 +134,8 @@ export function ResultScreen({
       >
         <DemoClaimModal
           open={claimOpen}
-          closeLabel={appCopy.claimModal.close}
+          waitingTxLabel={appCopy.claimModal.waitingTx}
+          playAgainLabel={appCopy.claimModal.playAgain}
           connectedWalletAddress={connectedWalletAddress}
           connectedWalletHint={appCopy.claimModal.connectedWalletHint}
           connectedWalletTitle={appCopy.claimModal.connectedWalletTitle}
@@ -150,7 +157,8 @@ export function ResultScreen({
           title={appCopy.claimModal.title}
           body={appCopy.claimModal.body}
         />
-        {!reduceMotion && <ConfettiBurst />}
+        {!reduceMotion && won ? <ConfettiBurst /> : null}
+        {!reduceMotion && !won ? <SadEmojiBurst /> : null}
         <div className={resultScrollBodyClass}>
           <motion.div
             className="mx-auto flex w-full max-w-lg flex-col items-center text-center"
@@ -245,7 +253,8 @@ export function ResultScreen({
     >
       <DemoClaimModal
         open={claimOpen}
-        closeLabel={appCopy.claimModal.close}
+        waitingTxLabel={appCopy.claimModal.waitingTx}
+        playAgainLabel={appCopy.claimModal.playAgain}
         connectedWalletAddress={connectedWalletAddress}
         connectedWalletHint={appCopy.claimModal.connectedWalletHint}
         connectedWalletTitle={appCopy.claimModal.connectedWalletTitle}
@@ -399,8 +408,11 @@ function ChainRoundPanel({
 
   return (
     <div className="mb-6 w-full max-w-xl rounded-2xl border border-[var(--game-border)] bg-[var(--game-surface-elevated)] p-4 text-left">
-      <p className="mb-3 text-xs uppercase tracking-widest text-[var(--game-electric)]">
+      <p className="mb-1 text-xs uppercase tracking-widest text-[var(--game-electric)]">
         {appCopy.chainActivity.title}
+      </p>
+      <p className="mb-3 text-xs leading-relaxed text-[var(--game-foreground-muted)]">
+        {appCopy.chainActivity.subtitle}
       </p>
       {receipt.ticketId != null && (
         <p className="mb-3 font-mono text-xs text-[var(--game-foreground-muted)]">
@@ -417,15 +429,23 @@ function ChainRoundPanel({
               href={explorerHref(row.hash)}
               target="_blank"
               rel="noreferrer"
-              className="break-all text-xs font-medium text-[var(--game-electric)] underline-offset-2 hover:underline"
+              className="text-right text-xs font-medium text-[var(--game-electric)] underline-offset-2 hover:underline"
             >
-              {appCopy.chainActivity.viewTx}
+              <span className="font-mono text-[var(--game-foreground-muted)]">
+                {truncateTxHash(row.hash)}
+              </span>
+              <span className="ml-2">{appCopy.chainActivity.viewTx}</span>
             </a>
           </li>
         ))}
       </ul>
     </div>
   );
+}
+
+function truncateTxHash(hash: string) {
+  if (hash.length <= 14) return hash;
+  return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
 }
 
 function formatUsd(value: number) {
@@ -589,6 +609,44 @@ function ResultLoopVideo({
       onError={() => setFailedSrc(src)}
       aria-label="Penalty replay on loop"
     />
+  );
+}
+
+function SadEmojiBurst() {
+  const emojis = ["😢", "😔", "🙁", "💔", "📉"];
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      aria-hidden
+    >
+      {emojis.map((emoji, i) => {
+        const angle = (i / emojis.length) * Math.PI * 2 + 0.4;
+        const dist = 100 + (i % 3) * 36;
+        const x = Math.cos(angle) * dist;
+        const y = Math.sin(angle) * dist * 0.9;
+        return (
+          <motion.span
+            key={i}
+            className="absolute left-1/2 top-[40%] select-none text-2xl sm:text-3xl"
+            style={{ marginLeft: -12, marginTop: -12 }}
+            initial={{ opacity: 0.9, scale: 0.6, x: 0, y: 0 }}
+            animate={{
+              opacity: [0.9, 0.85, 0],
+              scale: [0.6, 1, 0.75],
+              x,
+              y,
+              rotate: i % 2 === 0 ? 12 : -10,
+            }}
+            transition={{
+              duration: 1.35 + i * 0.08,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            {emoji}
+          </motion.span>
+        );
+      })}
+    </div>
   );
 }
 
