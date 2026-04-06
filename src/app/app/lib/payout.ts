@@ -1,5 +1,4 @@
-import type { PredictionChoice } from "../config";
-import type { DemoVideoResult } from "./demoResult";
+import type { DemoVideoResult, PredictionChoice } from "../config";
 
 const DIRECTION_PRICES = {
   left: 0.38,
