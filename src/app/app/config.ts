@@ -1,5 +1,9 @@
 export type Direction = "left" | "right";
 export type Outcome = "goal" | "miss";
+export type DemoVideoResult = {
+  direction: Direction;
+  outcome: Outcome;
+};
 
 export type DemoVideoSet = {
   id: string;
@@ -7,7 +11,7 @@ export type DemoVideoSet = {
   afterSrc: string;
   fullSrc: string;
   previewSrc: string;
-  resultSrc: string;
+  result: DemoVideoResult;
   /** Optional static poster in public/ (empty = none) */
   poster: string;
 };
@@ -17,58 +21,58 @@ export type DemoVideoSet = {
  * When the .mp4 files are missing, the app falls back to the simulated flow.
  */
 export const DEMO_VIDEO_SETS = {
-  "messi-miss-1-left": {
-    id: "messi-miss-1-left",
-    beforeSrc: "/videos/demo/messi-miss-1-left/before.mp4",
-    afterSrc: "/videos/demo/messi-miss-1-left/after.mp4",
-    fullSrc: "/videos/demo/messi-miss-1-left/full.mp4",
-    previewSrc: "/videos/demo/messi-miss-1-left/full.mp4",
-    resultSrc: "/videos/demo/messi-miss-1-left/result.json",
+  "set-01": {
+    id: "set-01",
+    beforeSrc: "/videos/demo/set-01/before.mp4",
+    afterSrc: "/videos/demo/set-01/after.mp4",
+    fullSrc: "/videos/demo/set-01/full.mp4",
+    previewSrc: "/videos/demo/set-01/full.mp4",
+    result: { direction: "left", outcome: "miss" },
     poster: "",
   },
-  "messi-goal-1-left": {
-    id: "messi-goal-1-left",
-    beforeSrc: "/videos/demo/messi-goal-1-left/before.mp4",
-    afterSrc: "/videos/demo/messi-goal-1-left/after.mp4",
-    fullSrc: "/videos/demo/messi-goal-1-left/full.mp4",
-    previewSrc: "/videos/demo/messi-goal-1-left/full.mp4",
-    resultSrc: "/videos/demo/messi-goal-1-left/result.json",
+  "set-02": {
+    id: "set-02",
+    beforeSrc: "/videos/demo/set-02/before.mp4",
+    afterSrc: "/videos/demo/set-02/after.mp4",
+    fullSrc: "/videos/demo/set-02/full.mp4",
+    previewSrc: "/videos/demo/set-02/full.mp4",
+    result: { direction: "left", outcome: "goal" },
     poster: "",
   },
-  "messi-goal-2-right": {
-    id: "messi-goal-2-right",
-    beforeSrc: "/videos/demo/messi-goal-2-right/before.mp4",
-    afterSrc: "/videos/demo/messi-goal-2-right/after.mp4",
-    fullSrc: "/videos/demo/messi-goal-2-right/full.mp4",
-    previewSrc: "/videos/demo/messi-goal-2-right/full.mp4",
-    resultSrc: "/videos/demo/messi-goal-2-right/result.json",
+  "set-03": {
+    id: "set-03",
+    beforeSrc: "/videos/demo/set-03/before.mp4",
+    afterSrc: "/videos/demo/set-03/after.mp4",
+    fullSrc: "/videos/demo/set-03/full.mp4",
+    previewSrc: "/videos/demo/set-03/full.mp4",
+    result: { direction: "right", outcome: "goal" },
     poster: "",
   },
-  "messi-goal-3-right": {
-    id: "messi-goal-3-right",
-    beforeSrc: "/videos/demo/messi-goal-3-right/before.mp4",
-    afterSrc: "/videos/demo/messi-goal-3-right/after.mp4",
-    fullSrc: "/videos/demo/messi-goal-3-right/full.mp4",
-    previewSrc: "/videos/demo/messi-goal-3-right/full.mp4",
-    resultSrc: "/videos/demo/messi-goal-3-right/result.json",
+  "set-04": {
+    id: "set-04",
+    beforeSrc: "/videos/demo/set-04/before.mp4",
+    afterSrc: "/videos/demo/set-04/after.mp4",
+    fullSrc: "/videos/demo/set-04/full.mp4",
+    previewSrc: "/videos/demo/set-04/full.mp4",
+    result: { direction: "right", outcome: "goal" },
     poster: "",
   },
-  "messi-goal-4-right": {
-    id: "messi-goal-4-right",
-    beforeSrc: "/videos/demo/messi-goal-4-right/before.mp4",
-    afterSrc: "/videos/demo/messi-goal-4-right/after.mp4",
-    fullSrc: "/videos/demo/messi-goal-4-right/full.mp4",
-    previewSrc: "/videos/demo/messi-goal-4-right/full.mp4",
-    resultSrc: "/videos/demo/messi-goal-4-right/result.json",
+  "set-05": {
+    id: "set-05",
+    beforeSrc: "/videos/demo/set-05/before.mp4",
+    afterSrc: "/videos/demo/set-05/after.mp4",
+    fullSrc: "/videos/demo/set-05/full.mp4",
+    previewSrc: "/videos/demo/set-05/full.mp4",
+    result: { direction: "right", outcome: "goal" },
     poster: "",
   },
-  "messi-miss-2-right": {
-    id: "messi-miss-2-right",
-    beforeSrc: "/videos/demo/messi-miss-2-right/before.mp4",
-    afterSrc: "/videos/demo/messi-miss-2-right/after.mp4",
-    fullSrc: "/videos/demo/messi-miss-2-right/full.mp4",
-    previewSrc: "/videos/demo/messi-miss-2-right/full.mp4",
-    resultSrc: "/videos/demo/messi-miss-2-right/result.json",
+  "set-06": {
+    id: "set-06",
+    beforeSrc: "/videos/demo/set-06/before.mp4",
+    afterSrc: "/videos/demo/set-06/after.mp4",
+    fullSrc: "/videos/demo/set-06/full.mp4",
+    previewSrc: "/videos/demo/set-06/full.mp4",
+    result: { direction: "right", outcome: "miss" },
     poster: "",
   },
 } as const satisfies Record<string, DemoVideoSet>;
@@ -77,20 +81,20 @@ export type DemoVideoSetId = keyof typeof DEMO_VIDEO_SETS;
 
 /**
  * On-chain `clipId` per demo set. Must match `setClip` on the deployed escrow
- * (same outcome as each set's `result.json`).
+ * (same outcome as each configured set result).
  */
 export const ONCHAIN_CLIP_ID_BY_DEMO_SET: Record<DemoVideoSetId, bigint> = {
-  "messi-miss-1-left": BigInt(1),
-  "messi-goal-1-left": BigInt(2),
-  "messi-goal-2-right": BigInt(3),
-  "messi-goal-3-right": BigInt(4),
-  "messi-goal-4-right": BigInt(5),
-  "messi-miss-2-right": BigInt(6),
+  "set-01": BigInt(1),
+  "set-02": BigInt(2),
+  "set-03": BigInt(3),
+  "set-04": BigInt(4),
+  "set-05": BigInt(5),
+  "set-06": BigInt(6),
 };
 
 export const DEMO_VIDEO_SET_IDS = Object.keys(DEMO_VIDEO_SETS) as DemoVideoSetId[];
 
-export const ACTIVE_DEMO_SET_ID: DemoVideoSetId = "messi-miss-1-left";
+export const ACTIVE_DEMO_SET_ID: DemoVideoSetId = "set-01";
 
 export function getDemoVideoSet(setId: string): DemoVideoSet {
   if (setId in DEMO_VIDEO_SETS) {

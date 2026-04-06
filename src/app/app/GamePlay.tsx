@@ -19,17 +19,13 @@ import {
   getDemoVideoSet,
   getRandomDemoSetId,
   ONCHAIN_CLIP_ID_BY_DEMO_SET,
+  type DemoVideoResult,
   type DemoVideoSetId,
   type Direction,
   type Outcome,
   type PredictionChoice,
 } from "./config";
 import type { GameChainAdapter } from "./gameChainAdapter";
-import {
-  DEFAULT_DEMO_VIDEO_RESULT,
-  loadDemoVideoResult,
-  type DemoVideoResult,
-} from "./lib/demoResult";
 import { explorerTxUrl } from "./lib/onchain/explorer";
 import type { ChainRoundReceipt } from "./lib/onchain/roundReceipt";
 import {
@@ -70,7 +66,7 @@ export type GamePlayProps = {
 
 export function GamePlay({ chain }: GamePlayProps) {
   const [actualResult, setActualResult] = useState<DemoVideoResult>(
-    DEFAULT_DEMO_VIDEO_RESULT
+    CONFIG.ACTIVE_DEMO_VIDEO_SET.result
   );
   const [claimErrorMessage, setClaimErrorMessage] = useState<string | null>(null);
   const [claimDestination, setClaimDestination] =
@@ -132,20 +128,6 @@ export function GamePlay({ chain }: GamePlayProps) {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [gameState]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    void loadDemoVideoResult(activeDemoSet.resultSrc).then((result) => {
-      if (!cancelled) {
-        setActualResult(result);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeDemoSet.resultSrc]);
-
   const videoPhase: DemoClipPhase = useMemo(() => {
     if (gameState === "video_playing") return "intro";
     if (gameState === "prediction") return "paused";
@@ -192,6 +174,7 @@ export function GamePlay({ chain }: GamePlayProps) {
         setChainReceipt({ fundTxHash: txHash });
         const nextDemoSetId = getRandomDemoSetId();
         setCurrentDemoSetId(nextDemoSetId);
+        setActualResult(getDemoVideoSet(nextDemoSetId).result);
         setVideoMode(nextDemoSetId);
         setVideoKey((value) => value + 1);
         setGameState("countdown");
@@ -208,6 +191,7 @@ export function GamePlay({ chain }: GamePlayProps) {
     resetRoundState();
     const nextDemoSetId = getRandomDemoSetId();
     setCurrentDemoSetId(nextDemoSetId);
+    setActualResult(getDemoVideoSet(nextDemoSetId).result);
     setVideoMode(nextDemoSetId);
     setVideoKey((value) => value + 1);
     setGameState("countdown");
