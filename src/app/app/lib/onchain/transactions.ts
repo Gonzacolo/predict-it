@@ -30,7 +30,7 @@ export async function approveAndPlay(params: {
   outcome: number;
 }): Promise<{
   ticketId: bigint;
-  approveTxHash: Hash;
+  approveTxHash?: Hash;
   playTxHash: Hash;
 }> {
   const { walletClient, publicClient, usdc, escrow } = params;
@@ -39,16 +39,26 @@ export async function approveAndPlay(params: {
     throw new Error("Wallet account unavailable.");
   }
 
-  const approveHash = await walletClient.writeContract({
+  const allowance = (await publicClient.readContract({
     address: usdc,
     abi: erc20Abi,
-    functionName: "approve",
-    args: [escrow, maxUint256],
-    account,
-    chain: walletClient.chain,
-  });
+    functionName: "allowance",
+    args: [account.address, escrow],
+  })) as bigint;
 
-  await publicClient.waitForTransactionReceipt({ hash: approveHash });
+  let approveHash: Hash | undefined;
+  if (allowance < params.amount) {
+    approveHash = await walletClient.writeContract({
+      address: usdc,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [escrow, maxUint256],
+      account,
+      chain: walletClient.chain,
+    });
+
+    await publicClient.waitForTransactionReceipt({ hash: approveHash });
+  }
 
   const playHash = await walletClient.writeContract({
     address: escrow,

@@ -34,7 +34,7 @@ import {
   type PayoutBreakdown,
 } from "./lib/payout";
 
-const wagerOptions = [1, 5, 10] as const;
+const FIXED_WAGER_USDC = 1;
 
 const isProd = process.env.NODE_ENV === "production";
 const devHudFlag = process.env.NEXT_PUBLIC_GAME_DEV_HUD;
@@ -79,7 +79,7 @@ export function GamePlay({ chain }: GamePlayProps) {
   const [lastPrediction, setLastPrediction] = useState<PredictionChoice | null>(
     null
   );
-  const [selectedWager, setSelectedWager] = useState<number | null>(null);
+  const selectedWager = FIXED_WAGER_USDC;
   const [settlement, setSettlement] = useState<PayoutBreakdown | null>(null);
   const [currentDemoSetId, setCurrentDemoSetId] = useState<DemoVideoSetId>(
     CONFIG.ACTIVE_DEMO_SET_ID
@@ -105,15 +105,11 @@ export function GamePlay({ chain }: GamePlayProps) {
   );
   const realVideoMode: VideoMode = currentDemoSetId;
 
-  const playEnabled = useMemo(() => selectedWager !== null, [selectedWager]);
+  const playEnabled = true;
   const usesSimulatedVideo = videoMode === "simulated";
 
   const connectedDisplayAddress =
     chain?.getConnectedAddress() ?? DEMO_CONNECTED_WALLET;
-
-  useEffect(() => {
-    fundIdempotencyRef.current = null;
-  }, [selectedWager]);
 
   useEffect(() => {
     const shouldWarn = gameState !== "wager" && gameState !== "result";
@@ -153,8 +149,6 @@ export function GamePlay({ chain }: GamePlayProps) {
   }, [currentDemoSetId]);
 
   const handlePlay = useCallback(async () => {
-    if (selectedWager === null) return;
-
     if (chain) {
       setFlowError(null);
       if (!chain.getConnectedAddress()) {
@@ -206,13 +200,10 @@ export function GamePlay({ chain }: GamePlayProps) {
   }, []);
 
   const handlePredictionTimeout = useCallback(() => {
-    const nextSettlement =
-      selectedWager !== null
-        ? calculateTimeoutLossPayout({
-            wager: selectedWager,
-            actualResult,
-          })
-        : null;
+    const nextSettlement = calculateTimeoutLossPayout({
+      wager: selectedWager,
+      actualResult,
+    });
 
     lastPredictionRef.current = null;
     ticketIdRef.current = null;
@@ -227,9 +218,6 @@ export function GamePlay({ chain }: GamePlayProps) {
     async (choice: { direction: Direction; outcome: Outcome }) => {
       if (chain) {
         const clipId = ONCHAIN_CLIP_ID_BY_DEMO_SET[currentDemoSetId];
-        if (selectedWager === null) {
-          throw new Error("Missing wager.");
-        }
         const lock = await chain.lockStake({
           clipId,
           wagerUsdc: selectedWager,
@@ -263,7 +251,7 @@ export function GamePlay({ chain }: GamePlayProps) {
   const handleVideoEnded = useCallback(async () => {
     const choice = lastPredictionRef.current;
     const nextSettlement =
-      choice !== null && selectedWager !== null
+      choice !== null
         ? calculatePayout({
             wager: selectedWager,
             userPick: choice,
@@ -434,13 +422,11 @@ export function GamePlay({ chain }: GamePlayProps) {
         lastPredictionRef.current = choice;
         setLastPrediction(choice);
         setSettlement(
-          selectedWager !== null
-            ? calculatePayout({
-                wager: selectedWager,
-                userPick: choice,
-                actualResult,
-              })
-            : null
+          calculatePayout({
+            wager: selectedWager,
+            userPick: choice,
+            actualResult,
+          })
         );
         setDidWin(options?.resultWin !== false);
         setClaimable(options?.resultWin !== false);
@@ -545,10 +531,7 @@ export function GamePlay({ chain }: GamePlayProps) {
           onDismissFlowError={
             chain ? () => setFlowError(null) : undefined
           }
-          selectedWager={selectedWager}
-          wagerOptions={wagerOptions}
           playEnabled={playEnabled}
-          onPickWager={setSelectedWager}
           onPlay={() => {
             void handlePlay();
           }}

@@ -16,7 +16,7 @@ export type GameChainAdapter = {
     outcome: Outcome;
   }) => Promise<{
     ticketId: bigint;
-    approveTxHash: Hash;
+    approveTxHash?: Hash;
     playTxHash: Hash;
   }>;
   settle: (ticketId: bigint) => Promise<{ txHash: Hash }>;

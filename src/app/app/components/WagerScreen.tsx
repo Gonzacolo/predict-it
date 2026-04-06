@@ -15,10 +15,7 @@ type WagerScreenProps = {
   playLabel?: string;
   flowError?: string | null;
   onDismissFlowError?: () => void;
-  selectedWager: number | null;
-  wagerOptions: readonly number[];
   playEnabled: boolean;
-  onPickWager: (amount: number) => void;
   onPlay: () => void | Promise<void>;
 };
 
@@ -31,10 +28,7 @@ export function WagerScreen({
   playLabel = "Play with Testnet USDC",
   flowError,
   onDismissFlowError,
-  selectedWager,
-  wagerOptions,
   playEnabled,
-  onPickWager,
   onPlay,
 }: WagerScreenProps) {
   return (
@@ -75,35 +69,6 @@ export function WagerScreen({
           >
             How confident are you?
           </h1>
-
-          <div className="relative z-10 mt-8 grid w-full max-w-2xl grid-cols-1 gap-3 sm:mt-10 sm:grid-cols-3">
-            {wagerOptions.map((amount) => {
-              const isSelected = selectedWager === amount;
-              return (
-                <button
-                  key={amount}
-                  type="button"
-                  onClick={() => onPickWager(amount)}
-                  disabled={isBusy}
-                  className="embed-touch-target inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-semibold uppercase tracking-widest transition duration-300 sm:h-14"
-                  style={{
-                    background: isSelected ? "var(--accent)" : "var(--card)",
-                    color: isSelected
-                      ? "var(--background)"
-                      : "var(--foreground)",
-                    border: isSelected
-                      ? "1px solid color-mix(in srgb, var(--accent) 70%, black)"
-                      : "1px solid var(--border)",
-                    boxShadow: isSelected
-                      ? "0 10px 24px color-mix(in srgb, var(--accent) 22%, transparent)"
-                      : "0 4px 12px rgba(0,0,0,0.05)",
-                  }}
-                >
-                  {amount} USDC
-                </button>
-              );
-            })}
-          </div>
 
           <button
             type="button"
