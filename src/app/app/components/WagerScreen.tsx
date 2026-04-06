@@ -126,17 +126,29 @@ export function WagerScreen({
             {isBusy ? busyLabel : playLabel}
           </button>
 
-          <div className="relative z-10 mt-5 max-w-2xl space-y-3 text-xs leading-relaxed text-[var(--muted-foreground)] sm:text-sm">
-            <p>{appCopy.wager.howRoundWorks(predictionSeconds)}</p>
-            {showMarketOdds ? (
-              <p>{appCopy.wager.marketOddsNote}</p>
-            ) : (
-              <p>{appCopy.wager.demoModeNote}</p>
-            )}
+          <div className="relative z-10 mt-6 w-full max-w-2xl space-y-4 text-left text-xs leading-relaxed text-[var(--muted-foreground)] sm:text-sm">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 sm:p-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--foreground)] sm:text-[0.8rem]">
+                {appCopy.wager.rulesTitle}
+              </p>
+              <ol className="space-y-2">
+                <li>1. {appCopy.wager.ruleStep1}</li>
+                <li>2. {appCopy.wager.ruleStep2}</li>
+                <li>3. {appCopy.wager.ruleStep3(predictionSeconds)}</li>
+              </ol>
+            </div>
+
+            <p>
+              {showMarketOdds
+                ? appCopy.wager.marketOddsNote
+                : appCopy.wager.demoModeNote}
+            </p>
+
             {helperText != null && helperText !== "" ? (
               <p className="text-[var(--foreground)]/90">{helperText}</p>
             ) : null}
-            <p className="text-[var(--muted-foreground)]">
+
+            <p className="rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-[var(--foreground)]">
               {appCopy.wager.disclaimer}
             </p>
           </div>

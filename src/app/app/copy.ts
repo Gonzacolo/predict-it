@@ -16,14 +16,17 @@ export const appCopy = {
     playOnChain: "Play with testnet USDC",
     onChainHint:
       "Arc Testnet only: USDC here is test tokens with no real value. Stakes and claims are on-chain via the escrow contract.",
-    howRoundWorks: (seconds: number) =>
-      `You will watch a Messi penalty kick. The clip pauses right before the shot—you pick left or right, then goal or miss. You have ${seconds} seconds to lock your pick. Good luck.`,
+    rulesTitle: "How this round works",
+    ruleStep1: "Watch the clip until it pauses right before the shot.",
+    ruleStep2: "Pick direction first (left or right), then outcome (goal or miss).",
+    ruleStep3: (seconds: number) =>
+      `Your pick locks automatically when the ${seconds}-second timer ends.`,
     marketOddsNote:
-      "Payouts follow a prediction-style split: your stake funds two independent legs (direction and outcome), each resolved 50/50 against the pool. Model odds used for pricing are illustrative—about 38% left / 62% right and about 22% miss / 78% goal—similar to buying shares at those probabilities. Actual settlement follows the smart contract.",
+      "Payout uses two independent legs (direction + outcome) that settle from the pool. Model odds shown are illustrative; final settlement follows the smart contract.",
     demoModeNote:
-      "Demo mode uses bundled clips and a simulated wallet; stakes are not sent on-chain.",
+      "Demo mode uses bundled clips and a simulated wallet. No on-chain transactions are sent.",
     disclaimer:
-      "If you do not complete both picks or your connection drops before the timer ends, you may lose your stake.",
+      "Important: if both picks are not completed before the timer ends, your round can settle as a loss.",
   },
   video: {
     tapToStart: "Tap to start",
