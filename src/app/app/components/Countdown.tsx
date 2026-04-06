@@ -60,18 +60,16 @@ export function Countdown({ onComplete }: CountdownProps) {
       <div className="pointer-events-none absolute inset-0 bg-[var(--game-surface)]" />
       <AnimatePresence mode="wait">
         {value !== null && (
-          <div className="relative z-10 rounded-full border border-white/25 bg-white/40 px-10 py-6 shadow-xl backdrop-blur-md dark:border-white/15 dark:bg-black/40 sm:px-14 sm:py-8">
-            <motion.span
-              key={value}
-              className="flex select-none items-center justify-center font-[family-name:var(--font-bebas)] text-[min(36vw,200px)] leading-none tracking-tight text-[var(--game-foreground)] sm:text-[min(34vw,220px)]"
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.35 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {value}
-            </motion.span>
-          </div>
+          <motion.span
+            key={value}
+            className="relative z-10 flex select-none items-center justify-center font-[family-name:var(--font-bebas)] text-[min(36vw,200px)] leading-none tracking-tight text-[var(--game-foreground)] sm:text-[min(34vw,220px)]"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.35 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {value}
+          </motion.span>
         )}
       </AnimatePresence>
     </div>
