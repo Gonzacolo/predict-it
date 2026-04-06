@@ -18,6 +18,7 @@ type FundBody = {
   playerWalletAddress?: string;
   desiredWagerUsdc?: number;
 };
+const SUPPORTED_WAGER_USDC = 1;
 
 export async function POST(request: Request) {
   void dynamicRestConfigOrNull;
@@ -39,9 +40,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (wager !== 1 && wager !== 10 && wager !== 25) {
+  if (wager !== SUPPORTED_WAGER_USDC) {
     return NextResponse.json(
-      { error: "desiredWagerUsdc must be 1, 10, or 25." },
+      { error: "desiredWagerUsdc must be 1." },
       { status: 400 }
     );
   }
