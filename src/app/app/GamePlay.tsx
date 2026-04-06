@@ -35,6 +35,7 @@ import {
 } from "./lib/payout";
 
 const FIXED_WAGER_USDC = 1;
+const LAST_CLAIM_RECIPIENT_KEY = "predictit:last-claim-recipient";
 
 const isProd = process.env.NODE_ENV === "production";
 const devHudFlag = process.env.NEXT_PUBLIC_GAME_DEV_HUD;
@@ -110,6 +111,17 @@ export function GamePlay({ chain }: GamePlayProps) {
 
   const connectedDisplayAddress =
     chain?.getConnectedAddress() ?? DEMO_CONNECTED_WALLET;
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(LAST_CLAIM_RECIPIENT_KEY);
+      if (stored && isEvmAddress(stored)) {
+        setClaimRecipient(stored);
+      }
+    } catch {
+      // Ignore storage access errors (private mode / restricted storage).
+    }
+  }, []);
 
   useEffect(() => {
     const shouldWarn = gameState !== "wager" && gameState !== "result";
@@ -294,7 +306,9 @@ export function GamePlay({ chain }: GamePlayProps) {
 
     if (!isEvmAddress(recipientValue)) {
       setClaimPhase("error");
-      setClaimErrorMessage("Enter a valid EVM wallet address.");
+      setClaimErrorMessage(
+        "Enter a valid EVM address (0x + 40 hex characters)."
+      );
       return;
     }
 
@@ -303,12 +317,18 @@ export function GamePlay({ chain }: GamePlayProps) {
 
     if (chain && ticketIdRef.current !== null && claimable) {
       try {
-        await chain.claim(
+        const { txHash } = await chain.claim(
           ticketIdRef.current,
           recipientValue as `0x${string}`
         );
+        setChainReceipt((prev) => ({ ...prev, claimTxHash: txHash }));
         if (claimDestination === "recipient") {
           setClaimRecipient(recipientValue);
+          try {
+            window.localStorage.setItem(LAST_CLAIM_RECIPIENT_KEY, recipientValue);
+          } catch {
+            // Ignore storage access errors.
+          }
         }
         setClaimPhase("success");
       } catch (e) {
@@ -323,6 +343,11 @@ export function GamePlay({ chain }: GamePlayProps) {
     await new Promise((resolve) => window.setTimeout(resolve, 900));
     if (claimDestination === "recipient") {
       setClaimRecipient(recipientValue);
+      try {
+        window.localStorage.setItem(LAST_CLAIM_RECIPIENT_KEY, recipientValue);
+      } catch {
+        // Ignore storage access errors.
+      }
     }
     setClaimPhase("success");
   }, [
