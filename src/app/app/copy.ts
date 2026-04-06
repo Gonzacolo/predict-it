@@ -13,7 +13,7 @@ export const appCopy = {
     funding: "Sending testnet USDC…",
     preparing: "Preparing…",
     playDemo: "Play demo round",
-    playOnChain: "Play with testnet USDC",
+    playOnChain: "play with 1 testnet USDC",
     onChainHint:
       "Arc Testnet only: USDC here is test tokens with no real value. Stakes and claims are on-chain via the escrow contract.",
     rulesTitle: "How this round works",
@@ -55,7 +55,8 @@ export const appCopy = {
   walletModal: {
     title: "Lock prediction",
     waiting: "Simulating wallet confirmation…",
-    waitingOnChain: "Approve USDC and confirm play in your wallet…",
+    waitingOnChain:
+      "Confirm play in your wallet. You may be asked for approval once.",
     success: "Prediction recorded on-chain",
     continue: "Continue",
   },
