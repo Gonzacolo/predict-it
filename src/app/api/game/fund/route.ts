@@ -1,4 +1,4 @@
-import { isAddress } from "viem";
+import { createPublicClient, http, isAddress } from "viem";
 import { erc20Abi } from "viem";
 import { NextResponse } from "next/server";
 
@@ -101,6 +101,35 @@ export async function POST(request: Request) {
     const wallet = createOperatorWalletClient();
     const stake = BigInt(wager) * BigInt(1_000_000);
     const fundedAmount = stake * BigInt(3);
+    const publicClient = createPublicClient({
+      chain: wallet.chain,
+      transport: http(wallet.chain.rpcUrls.default.http[0]),
+    });
+    const operatorBalance = (await publicClient.readContract({
+      address: usdc,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [wallet.account.address],
+    })) as bigint;
+
+    if (operatorBalance < fundedAmount) {
+      gameApiLog({
+        route: "fund",
+        event: "insufficient_operator_balance",
+        ip,
+        player: playerLower,
+        wager,
+        operatorBalance: operatorBalance.toString(),
+        requiredBalance: fundedAmount.toString(),
+      });
+      return NextResponse.json(
+        {
+          error:
+            "Funding temporarily unavailable: operator wallet has insufficient USDC balance.",
+        },
+        { status: 503 }
+      );
+    }
 
     const hash = await wallet.writeContract({
       account: wallet.account,
@@ -135,14 +164,17 @@ export async function POST(request: Request) {
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Funding failed.";
+    const normalizedMessage = /transfer amount exceeds balance/i.test(message)
+      ? "Funding temporarily unavailable: operator wallet has insufficient USDC balance."
+      : message;
     gameApiLog({
       route: "fund",
       event: "error",
       ip,
       player: playerLower,
       wager,
-      message,
+      message: normalizedMessage,
     });
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: normalizedMessage }, { status: 500 });
   }
 }
