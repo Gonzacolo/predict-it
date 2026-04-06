@@ -38,7 +38,7 @@ import {
   type PayoutBreakdown,
 } from "./lib/payout";
 
-const wagerOptions = [1, 10, 25] as const;
+const wagerOptions = [1, 5, 10] as const;
 
 const isProd = process.env.NODE_ENV === "production";
 const devHudFlag = process.env.NEXT_PUBLIC_GAME_DEV_HUD;

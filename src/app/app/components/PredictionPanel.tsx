@@ -213,46 +213,43 @@ export function PredictionPanel({
           animate={{ opacity: 1, x: 0 }}
           transition={reduceMotion ? { duration: 0 } : { delay: 0.15, duration: 0.3 }}
         >
-          <div
-            className="flex items-center gap-2 rounded-full border border-white/25 bg-white/40 px-3 py-2 shadow-lg backdrop-blur-md dark:border-white/15 dark:bg-black/40 sm:gap-3 sm:px-4 sm:py-2.5"
-            aria-hidden
-          >
-          <svg
-            width="132"
-            height="132"
-            viewBox="0 0 48 48"
-            className="h-[132px] w-[132px] shrink-0 -rotate-90 sm:h-[144px] sm:w-[144px]"
-            aria-hidden
-          >
-            <circle
-              cx="24"
-              cy="24"
-              r="18"
-              fill="none"
-              stroke="var(--game-ring-track)"
-              strokeWidth="4"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="18"
-              fill="none"
-              stroke={timerColor}
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              className="transition-[stroke] duration-300"
-            />
-          </svg>
-          <span
-            className="min-w-[2.25ch] font-[family-name:var(--font-bebas)] text-6xl tabular-nums sm:text-7xl"
-            style={{ color: timerColor }}
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            00:{secondsLeft.toString().padStart(2, "0")}
-          </span>
+          <div className="relative h-[96px] w-[96px] sm:h-[112px] sm:w-[112px]" aria-hidden>
+            <svg
+              width="112"
+              height="112"
+              viewBox="0 0 48 48"
+              className="h-full w-full -rotate-90"
+              aria-hidden
+            >
+              <circle
+                cx="24"
+                cy="24"
+                r="18"
+                fill="none"
+                stroke="var(--game-ring-track)"
+                strokeWidth="4"
+              />
+              <circle
+                cx="24"
+                cy="24"
+                r="18"
+                fill="none"
+                stroke={timerColor}
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                className="transition-[stroke] duration-300"
+              />
+            </svg>
+            <span
+              className="absolute inset-0 flex items-center justify-center font-[family-name:var(--font-bebas)] text-3xl tabular-nums sm:text-4xl"
+              style={{ color: timerColor }}
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {secondsLeft.toString().padStart(2, "0")}
+            </span>
           </div>
         </motion.div>
       )}

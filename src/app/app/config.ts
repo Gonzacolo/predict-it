@@ -119,7 +119,7 @@ export const ACTIVE_DEMO_VIDEO_SET = getDemoVideoSet(ACTIVE_DEMO_SET_ID);
  * Leave "" to keep the placeholder. When ready, add e.g. public/videos/landing/explainer.mp4
  * and set this to "/videos/landing/explainer.mp4".
  */
-export const LANDING_EXPLAINER_VIDEO_SRC = "";
+export const LANDING_EXPLAINER_VIDEO_SRC = "/videos/landing/explainer.mp4";
 
 /** Optional poster in public/, e.g. "/videos/landing/explainer-poster.jpg" */
 export const LANDING_EXPLAINER_POSTER = "";
