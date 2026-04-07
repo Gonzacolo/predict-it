@@ -197,7 +197,6 @@ export default function Home() {
                     borderColor:
                       "color-mix(in srgb, var(--accent) 35%, transparent)",
                   }}
-                  aria-hidden
                 >
                   <DemoPreviewVideo
                     src={CONFIG.LANDING_EXPLAINER_VIDEO_SRC}
