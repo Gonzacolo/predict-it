@@ -63,6 +63,7 @@ export function DemoPreviewVideo({ src, poster }: DemoPreviewVideoProps) {
         src={src}
         poster={poster || undefined}
         autoPlay
+        controls
         muted
         loop
         playsInline
